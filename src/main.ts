@@ -1,8 +1,8 @@
 import { Mesh, PathTracerMaterial, PerspectiveCamera } from "./core";
 import { BoxGeometry } from "./geometry/BoxGeometry";
-import { GL_WebGLRenderer } from "./gl/glWebGLRenderer";
+import { WebGLRenderer } from "./renderer";
 
-const renderer = new GL_WebGLRenderer(document.getElementById("webglcanvas") as HTMLCanvasElement);
+const renderer = new WebGLRenderer(document.getElementById("webglcanvas") as HTMLCanvasElement);
 
 const pathtracerMat = new PathTracerMaterial();
 const box = new BoxGeometry();

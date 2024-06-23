@@ -10,7 +10,7 @@ export class GL_Program {
     attribLocations: Record<string, number>;
     uniformLocations: Record<string, WebGLUniformLocation>;
 
-    constructor(public gl: WebGLRenderingContext, public shader: Shader) {
+    constructor(public gl: WebGL2RenderingContext, public shader: Shader) {
         const program = gl.createProgram();
 
         const vs = gl.createShader(gl.VERTEX_SHADER);

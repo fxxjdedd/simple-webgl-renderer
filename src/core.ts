@@ -1,8 +1,14 @@
 import { vec3 as Vector3, mat4 as Matrix4, quat as Quaterion } from "gl-matrix";
 import { BufferLayout, StructuredData, TypedArrayCode } from "./util";
 
-class Material {}
-class PathTracerMaterial extends Material {}
+class Material {
+    constructor(public name: string) {}
+}
+class PathTracerMaterial extends Material {
+    constructor() {
+        super("PathTracerMaterial");
+    }
+}
 
 class PathTracerShader {}
 
@@ -49,12 +55,8 @@ class Object3D {
 }
 
 class Mesh extends Object3D {
-    geometry: Geometry;
-    material: Material;
-    constructor(geometry: Geometry, material: Material) {
+    constructor(public geometry: Geometry, public material: Material) {
         super();
-        this.geometry = geometry;
-        this.material = material;
     }
 }
 
