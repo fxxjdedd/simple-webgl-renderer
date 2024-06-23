@@ -133,7 +133,7 @@ export type BufferLayoutValue<TLayout extends BufferLayout> = {
 };
 
 export type BufferLayoutMerges<TLayout extends BufferLayout> = {
-    [K in keyof TLayout]: ArrayCodeToType<TLayout[K]["type"]>;
+    [K in keyof TLayout]: number[];
 };
 
 export class StructuredData<TLayout extends BufferLayout> {
@@ -242,7 +242,7 @@ export class StructuredData<TLayout extends BufferLayout> {
 
     protected _mergeTypedValue(
         type: number,
-        value: TypedArray,
+        value: number[],
         offset: number,
         components: number,
         stride: number
