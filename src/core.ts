@@ -13,7 +13,7 @@ class PathTracerMaterial extends Material {
 class PathTracerShader {}
 
 class Geometry<T extends BufferLayout = BufferLayout> {
-    index: ArrayBufferLike;
+    index: number[];
     attributes: Record<keyof T, number[]>;
     structuredData: StructuredData<T>;
     constructor(protected layout: T) {
@@ -21,7 +21,7 @@ class Geometry<T extends BufferLayout = BufferLayout> {
         this.structuredData = new StructuredData(layout);
     }
     setIndex(indices: number[]) {
-        this.index = new Int16Array(indices);
+        this.index = indices;
     }
 
     setAttribute(name: keyof T, attrBuffer: number[]) {

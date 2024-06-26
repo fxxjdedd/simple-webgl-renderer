@@ -10,7 +10,7 @@ export class GL_Program {
     attribLocations: Record<string, number>;
     uniformLocations: Record<string, WebGLUniformLocation>;
 
-    constructor(public gl: WebGL2RenderingContext, public shader: Shader) {
+    constructor(private gl: WebGL2RenderingContext, shader: Shader) {
         const program = gl.createProgram();
 
         const vs = gl.createShader(gl.VERTEX_SHADER);
@@ -51,5 +51,15 @@ export class GL_Program {
     setUniformWithSetter(name, value, setter) {
         const addr = this.gl.getUniformLocation(this.program, name);
         setter(addr, value);
+    }
+
+    draw(start, count) {
+        const gl = this.gl;
+        gl.drawElements(
+            gl.TRIANGLES,
+            count,
+            gl.UNSIGNED_SHORT,
+            start * Uint16Array.BYTES_PER_ELEMENT
+        );
     }
 }

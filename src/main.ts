@@ -15,3 +15,4 @@ function animate() {
         animate();
     });
 }
+animate();

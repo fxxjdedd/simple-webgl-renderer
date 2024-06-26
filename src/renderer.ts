@@ -30,10 +30,11 @@ export class WebGLRenderer {
         program.setUniformWithSetter("u_mvMatrix", mesh.mvMatrix, gl.uniformMatrix4fv);
 
         let bindingState: GL_BindingState;
-        if ((bindingState = this.bindingStates.getBindingState(program, mesh.geometry))) {
-            bindingState.bind();
-        } else {
-            this.bindingStates.setBindingState(program, mesh.geometry);
+        if (!(bindingState = this.bindingStates.getBindingState(program, mesh.geometry))) {
+            bindingState = this.bindingStates.setBindingState(program, mesh.geometry);
         }
+        bindingState.bind();
+
+        program.draw(0, bindingState.indexBuffer.structuredData.getTrangleCount());
     }
 }

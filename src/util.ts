@@ -279,3 +279,26 @@ export class StructuredData<TLayout extends BufferLayout> {
         throw new Error("");
     }
 }
+
+const IndexStructuredDataLayout = StructuredData.createLayout({
+    index: {
+        type: TypedArrayCode.uint16,
+        components: 1,
+    },
+});
+
+export class IndexStructuredData extends StructuredData<typeof IndexStructuredDataLayout> {
+    constructor() {
+        super(IndexStructuredDataLayout);
+    }
+
+    getTrangleType() {
+        return this.accessors.index.type;
+    }
+
+    getTrangleCount() {
+        const { type, components } = this.accessors.index;
+        const oneLayoutSize = this._getOneOfLayoutSize(type, components);
+        return this.buffer.byteLength / oneLayoutSize;
+    }
+}
