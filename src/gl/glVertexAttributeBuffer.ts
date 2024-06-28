@@ -27,13 +27,17 @@ export function getGLType(gl: WebGL2RenderingContext, typeCode: number) {
 export class GL_VertexAttributeBuffer {
     glBuffer: WebGLBuffer;
     glVAO: WebGLVertexArrayObject;
+    structuredData: StructuredData<BufferLayout>;
     constructor(
         public gl: WebGL2RenderingContext,
-        public structuredData: StructuredData<BufferLayout>
+        public attributes: Record<string, number[]>,
+        public layout: BufferLayout
     ) {
+        this.structuredData = new StructuredData(layout);
+        this.structuredData.merge(this.attributes);
         this.glBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this.glBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, structuredData.buffer, gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, this.structuredData.buffer, gl.STATIC_DRAW);
         this.glVAO = gl.createVertexArray();
     }
 

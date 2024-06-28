@@ -116,6 +116,5 @@ export class BoxGeometry extends Geometry<typeof BoxGeometryBufferLayout> {
         this.setAttribute("position", vertices);
         this.setAttribute("normal", normals);
         this.setAttribute("uv", uvs);
-        this.copyToBuffer();
     }
 }

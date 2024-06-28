@@ -23,7 +23,11 @@ export class GL_BindingState {
     vertexAttributeBuffer: GL_VertexAttributeBuffer;
     indexBuffer: GL_IndexBuffer;
     constructor(private gl: WebGL2RenderingContext, program: GL_Program, geometry: Geometry) {
-        this.vertexAttributeBuffer = new GL_VertexAttributeBuffer(gl, geometry.structuredData);
+        this.vertexAttributeBuffer = new GL_VertexAttributeBuffer(
+            gl,
+            geometry.attributes,
+            geometry.layout
+        );
         this.vertexAttributeBuffer.setupVAO(program);
         this.indexBuffer = new GL_IndexBuffer(gl, geometry.index);
     }

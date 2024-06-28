@@ -15,10 +15,8 @@ class PathTracerShader {}
 class Geometry<T extends BufferLayout = BufferLayout> {
     index: number[];
     attributes: Record<keyof T, number[]>;
-    structuredData: StructuredData<T>;
-    constructor(protected layout: T) {
+    constructor(public layout: T) {
         this.attributes = {} as any;
-        this.structuredData = new StructuredData(layout);
     }
     setIndex(indices: number[]) {
         this.index = indices;
@@ -26,10 +24,6 @@ class Geometry<T extends BufferLayout = BufferLayout> {
 
     setAttribute(name: keyof T, attrBuffer: number[]) {
         this.attributes[name] = attrBuffer;
-    }
-
-    copyToBuffer() {
-        this.structuredData.merge(this.attributes);
     }
 }
 
@@ -68,16 +62,20 @@ class Camera extends Object3D {
     }
 }
 class PerspectiveCamera extends Camera {
-    fov: number;
-    aspect: number;
-    near: number;
-    far: number;
-    constructor(fov = 60, aspect = 1, near = 0.1, far = 1000) {
+    public zoom = 1;
+    constructor(public fov = 60, public aspect = 1, public near = 0.1, public far = 1000) {
         super();
-        this.fov = fov;
-        this.aspect = aspect;
-        this.near = near;
-        this.far = far;
+        this.updateProjectionMatrix();
+    }
+
+    updateProjectionMatrix() {
+        const top = (this.near * Math.tan(this.fov / 2)) / this.zoom;
+        const height = 2 * top;
+        const width = this.aspect * height;
+        const zoomedAspect = width / height;
+        const zoomedFov = Math.atan(top / this.near);
+
+        Matrix4.perspective(this.projectionMatrix, zoomedFov, zoomedAspect, this.near, this.far);
     }
 }
 export { Material, PathTracerMaterial, Geometry, Object3D, Mesh, Camera, PerspectiveCamera };
