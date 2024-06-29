@@ -50,7 +50,7 @@ export class GL_VertexAttributeBuffer {
         this.bindVAO();
         for (const attrName in this.structuredData.accessors) {
             const { type, components, offset, stride } = this.structuredData.accessors[attrName];
-            const attribLocation = program.attribLocations[attrName];
+            const attribLocation = program.attributes[attrName].location;
             this.gl.enableVertexAttribArray(attribLocation);
             this.gl.vertexAttribPointer(
                 attribLocation,

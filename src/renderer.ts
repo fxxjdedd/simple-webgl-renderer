@@ -26,8 +26,8 @@ export class WebGLRenderer {
         }
 
         // prettier-ignore
-        program.setUniformWithSetter("u_projMatrix", camera.projectionMatrix, gl.uniformMatrix4fv);
-        program.setUniformWithSetter("u_mvMatrix", mesh.mvMatrix, gl.uniformMatrix4fv);
+        program.setUniform("u_projMatrix", camera.projectionMatrix,);
+        program.setUniform("u_mvMatrix", mesh.mvMatrix);
 
         let bindingState: GL_BindingState;
         if (!(bindingState = this.bindingStates.getBindingState(program, mesh.geometry))) {

@@ -1,3 +1,5 @@
+import { GL_Uniforms } from "./glUniforms";
+
 export interface Shader {
     vertex: string;
     fragment: string;
@@ -7,8 +9,8 @@ export interface Shader {
 
 export class GL_Program {
     program: globalThis.WebGLProgram;
-    attribLocations: Record<string, number>;
-    uniformLocations: Record<string, WebGLUniformLocation>;
+    attributes: Record<string, { type: number; location: number; locationSize: number }>;
+    uniforms: GL_Uniforms;
 
     constructor(private gl: WebGL2RenderingContext, shader: Shader) {
         const program = gl.createProgram();
@@ -36,21 +38,55 @@ export class GL_Program {
         if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
             throw new Error(gl.getProgramInfoLog(program));
         }
-
-        for (const attrName of shader.attributes) {
-            this.attribLocations[attrName] = gl.getAttribLocation(program, attrName);
-        }
-
-        for (const uniformName of shader.uniforms) {
-            this.uniformLocations[uniformName] = gl.getUniformLocation(program, uniformName);
-        }
+        this.uniforms = this.fetchUniformLocations();
+        this.attributes = this.fetchAttributeLocations();
 
         this.program = program;
     }
 
-    setUniformWithSetter(name, value, setter) {
-        const addr = this.gl.getUniformLocation(this.program, name);
-        setter(addr, value);
+    private fetchUniformLocations() {
+        const gl = this.gl;
+        const program = this.program;
+        const uniforms = new GL_Uniforms();
+        const n = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
+
+        for (let i = 0; i < n; i++) {
+            const info = gl.getActiveUniform(program, i),
+                addr = gl.getUniformLocation(program, info.name);
+            uniforms.appendUniform(info, addr);
+        }
+
+        return uniforms;
+    }
+
+    private fetchAttributeLocations() {
+        const gl = this.gl;
+        const program = this.program;
+        const attributes = {};
+
+        const n = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES);
+
+        for (let i = 0; i < n; i++) {
+            const info = gl.getActiveAttrib(program, i);
+            const name = info.name;
+
+            let locationSize = 1;
+            if (info.type === gl.FLOAT_MAT2) locationSize = 2;
+            if (info.type === gl.FLOAT_MAT3) locationSize = 3;
+            if (info.type === gl.FLOAT_MAT4) locationSize = 4;
+
+            attributes[name] = {
+                type: info.type,
+                location: gl.getAttribLocation(program, name),
+                locationSize: locationSize,
+            };
+        }
+
+        return attributes;
+    }
+
+    setUniform(name, value) {
+        const glUniform = this.uniforms[name];
     }
 
     draw(start, count) {
