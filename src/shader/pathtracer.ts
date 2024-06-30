@@ -13,7 +13,7 @@ export const vertex = /* glsl */ `#version 300 es
 
 	void main() {
 		gl_Position = u_projMatrix * u_mvMatrix * vec4(position, 1.0);
-		v_normal = mat3(u_mvMatrix) * mat3(u_projMatrix) * normal;
+		v_normal = mat3(u_mvMatrix) * normal;
 		v_uv = uv;
 	}
 `;
@@ -24,7 +24,7 @@ export const fragment = /* glsl */ `#version 300 es
 
 
 	in vec3 v_normal;
-	in vec2 v_uv;
+	in vec3 v_uv;
 
 	out vec4 fragColor;
 

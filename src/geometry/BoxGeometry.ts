@@ -40,17 +40,17 @@ export class BoxGeometry extends Geometry<typeof BoxGeometryBufferLayout> {
 
         // every plane's direction is rt -> lb
         // left plane
-        buildPlane(y, z, x, 1, -1, height, depth, -width, heightSegments, depthSegments, 0);
+        buildPlane(y, z, x, -1, 1, height, depth, -width, heightSegments, depthSegments, 0);
         // right plane
         buildPlane(y, z, x, -1, -1, height, depth, width, heightSegments, depthSegments, 1);
         // forward plane
         buildPlane(x, y, z, -1, -1, width, height, -depth, widthSegments, heightSegments, 2);
         // backward plane
-        buildPlane(x, y, z, 1, -1, width, height, depth, widthSegments, heightSegments, 3);
+        buildPlane(x, y, z, -1, 1, width, height, depth, widthSegments, heightSegments, 3);
         // top plane
-        buildPlane(x, z, y, -1, -1, width, depth, height, widthSegments, depthSegments, 4);
+        buildPlane(x, z, y, 1, 1, width, depth, height, widthSegments, depthSegments, 4);
         // bottom plane
-        buildPlane(x, z, y, -1, 1, width, depth, -height, widthSegments, depthSegments, 5);
+        buildPlane(x, z, y, 1, -1, width, depth, -height, widthSegments, depthSegments, 5);
 
         function buildPlane(
             u,
@@ -103,109 +103,20 @@ export class BoxGeometry extends Geometry<typeof BoxGeometryBufferLayout> {
 
             for (let iy = 0; iy < segCountY; iy++) {
                 for (let ix = 0; ix < segCountX; ix++) {
-                    const lt = currentAccumulate + ix + iy * segCountX;
-                    const rt = currentAccumulate + ix + 1 + iy * segCountX;
-                    const rb = currentAccumulate + ix + 1 + segCountX + iy * segCountX;
-                    const lb = currentAccumulate + ix + segCountX + iy * segCountX;
+                    const lt = currentAccumulate + ix + iy * segCountX1;
+                    const lb = currentAccumulate + ix + (iy + 1) * segCountX1;
+                    const rb = currentAccumulate + ix + 1 + (iy + 1) * segCountX1;
+                    const rt = currentAccumulate + ix + 1 + iy * segCountX1;
 
-                    indices.push(lt, rt, rb);
-                    indices.push(rb, lb, lt);
+                    indices.push(lt, lb, rt);
+                    indices.push(lb, rb, rt);
                 }
             }
         }
 
-        this.setIndex([
-            // 前面
-            0, 1, 2, 0, 2, 3,
-            // 后面
-            4, 5, 6, 4, 6, 7,
-            // 顶面
-            3, 2, 6, 3, 6, 7,
-            // 底面
-            0, 1, 5, 0, 5, 4,
-            // 左面
-            0, 3, 7, 0, 7, 4,
-            // 右面
-            1, 2, 6, 1, 6, 5,
-        ]);
-        this.setAttribute(
-            "position",
-            [
-                // 前面
-                -1.0,
-                -1.0,
-                1.0, // 顶点 0
-                1.0,
-                -1.0,
-                1.0, // 顶点 1
-                1.0,
-                1.0,
-                1.0, // 顶点 2
-                -1.0,
-                1.0,
-                1.0, // 顶点 3
-                // 后面
-                -1.0,
-                -1.0,
-                -1.0, // 顶点 4
-                1.0,
-                -1.0,
-                -1.0, // 顶点 5
-                1.0,
-                1.0,
-                -1.0, // 顶点 6
-                -1.0,
-                1.0,
-                -1.0, // 顶点 7
-            ].map((d) => d * 0.5)
-        );
-        this.setAttribute("normal", [
-            // 前面
-            -1.0,
-            -1.0,
-            1.0, // 顶点 0
-            1.0,
-            -1.0,
-            1.0, // 顶点 1
-            1.0,
-            1.0,
-            1.0, // 顶点 2
-            -1.0,
-            1.0,
-            1.0, // 顶点 3
-            // 后面
-            -1.0,
-            -1.0,
-            -1.0, // 顶点 4
-            1.0,
-            -1.0,
-            -1.0, // 顶点 5
-            1.0,
-            1.0,
-            -1.0, // 顶点 6
-            -1.0,
-            1.0,
-            -1.0, // 顶点 7
-        ]);
-        this.setAttribute("uv", [
-            // 前面
-            -1.0,
-            -1.0,
-            1.0, // 顶点 0
-            1.0,
-            -1.0,
-            1.0, // 顶点 1
-            1.0,
-            1.0,
-            1.0, // 顶点 2
-            -1.0,
-            1.0,
-            1.0, // 顶点 3
-            // 后面
-            -1.0,
-            -1.0,
-            -1.0, // 顶点 4
-            1.0,
-        ]);
+        this.setIndex(indices);
+        this.setAttribute("position", vertices);
+        this.setAttribute("normal", normals);
+        this.setAttribute("uv", uvs);
     }
 }
