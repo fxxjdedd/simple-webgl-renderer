@@ -1,8 +1,8 @@
 // https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/getActiveUniform
 
 export class GL_Uniforms {
-    map = {};
-    list = [];
+    map: Record<string, UniformWrapper> = {};
+    list: UniformWrapper[] = [];
 
     appendUniform(info: WebGLActiveInfo, addr: WebGLUniformLocation) {
         const namePath = info.name;
@@ -16,7 +16,8 @@ export class GL_Uniforms {
             this.list.push(u);
         } else if ((matches = namePath.match(/(\w+)\[(\d+)\]$/))) {
             const [_, id, index] = matches;
-            const h = this.map[id] || new GL_HierarchyUniformStructure(id);
+            const h = (this.map[id] ||
+                new GL_HierarchyUniformStructure(id)) as GL_HierarchyUniformStructure;
             const u = new GL_SimpleArrayUniform(+index, info, addr);
             h.map[+index] = u;
             h.list.push(u);
@@ -26,7 +27,8 @@ export class GL_Uniforms {
             }
         } else if ((matches = namePath.match(/(\w+)\.(\w+)$/))) {
             const [_, id, field] = matches;
-            const h = this.map[id] || new GL_HierarchyUniformStructure(id);
+            const h = (this.map[id] ||
+                new GL_HierarchyUniformStructure(id)) as GL_HierarchyUniformStructure;
             const u = new GL_BareUniform(field, info, addr);
             h.map[field] = u;
             h.list.push(u);
@@ -40,14 +42,18 @@ export class GL_Uniforms {
     }
 }
 
+interface UniformWrapper {
+    setValue(gl: WebGL2RenderingContext, v: any): void;
+}
+
 // uniform vec4 a;
 // a
-class GL_BareUniform {
+class GL_BareUniform implements UniformWrapper {
     constructor(public name, public info, public addr) {}
 
     setValue(gl: WebGL2RenderingContext, v) {
         const setter = getUniformFunction(gl, this.info.type);
-        setter.call(gl, v);
+        setter.call(gl, this.addr, false, v);
     }
 }
 
@@ -55,7 +61,7 @@ class GL_BareUniform {
 // b[0]
 // b[1]
 // b[2]
-export class GL_SimpleArrayUniform {
+export class GL_SimpleArrayUniform implements UniformWrapper {
     constructor(public index, public info, public addr) {}
 
     setValue(gl: WebGL2RenderingContext, v) {
@@ -84,10 +90,12 @@ export class GL_SimpleArrayUniform {
 //     float bar;
 // } e;
 // e.bar
-export class GL_HierarchyUniformStructure {
-    map = {};
-    list = [];
+export class GL_HierarchyUniformStructure implements UniformWrapper {
+    map: Record<string, UniformWrapper> = {};
+    list: UniformWrapper[] = [];
     constructor(public id) {}
+
+    setValue(gl: WebGL2RenderingContext, v: any): void {}
 }
 
 // uniform Block {

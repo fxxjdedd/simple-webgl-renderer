@@ -3,8 +3,6 @@ import { GL_Uniforms } from "./glUniforms";
 export interface Shader {
     vertex: string;
     fragment: string;
-    uniforms: string[];
-    attributes: string[];
 }
 
 export class GL_Program {
@@ -14,6 +12,7 @@ export class GL_Program {
 
     constructor(private gl: WebGL2RenderingContext, shader: Shader) {
         const program = gl.createProgram();
+        this.program = program;
 
         const vs = gl.createShader(gl.VERTEX_SHADER);
         gl.shaderSource(vs, shader.vertex);
@@ -40,8 +39,6 @@ export class GL_Program {
         }
         this.uniforms = this.fetchUniformLocations();
         this.attributes = this.fetchAttributeLocations();
-
-        this.program = program;
     }
 
     private fetchUniformLocations() {
@@ -86,7 +83,8 @@ export class GL_Program {
     }
 
     setUniform(name, value) {
-        const glUniform = this.uniforms[name];
+        const glUniform = this.uniforms.map[name];
+        glUniform.setValue(this.gl, value);
     }
 
     draw(start, count) {

@@ -76,6 +76,8 @@ export class BoxGeometry extends Geometry<typeof BoxGeometryBufferLayout> {
 
             const vec = Vector3.create();
 
+            let currentAccumulate = vertexCountAccumulate;
+
             for (let iy = 0; iy < segCountY1; iy++) {
                 const y = segHeight * iy - halfV;
                 for (let ix = 0; ix < segCountX1; ix++) {
@@ -101,10 +103,10 @@ export class BoxGeometry extends Geometry<typeof BoxGeometryBufferLayout> {
 
             for (let iy = 0; iy < segCountY; iy++) {
                 for (let ix = 0; ix < segCountX; ix++) {
-                    const lt = vertexCountAccumulate + ix + iy * segCountX;
-                    const rt = vertexCountAccumulate + ix + 1 + iy * segCountX;
-                    const rb = vertexCountAccumulate + ix + 1 + segCountX + iy * segCountX;
-                    const lb = vertexCountAccumulate + ix + segCountX + iy * segCountX;
+                    const lt = currentAccumulate + ix + iy * segCountX;
+                    const rt = currentAccumulate + ix + 1 + iy * segCountX;
+                    const rb = currentAccumulate + ix + 1 + segCountX + iy * segCountX;
+                    const lb = currentAccumulate + ix + segCountX + iy * segCountX;
 
                     indices.push(lt, rt, rb);
                     indices.push(rb, lb, lt);
@@ -112,9 +114,98 @@ export class BoxGeometry extends Geometry<typeof BoxGeometryBufferLayout> {
             }
         }
 
-        this.setIndex(indices);
-        this.setAttribute("position", vertices);
-        this.setAttribute("normal", normals);
-        this.setAttribute("uv", uvs);
+        this.setIndex([
+            // 前面
+            0, 1, 2, 0, 2, 3,
+            // 后面
+            4, 5, 6, 4, 6, 7,
+            // 顶面
+            3, 2, 6, 3, 6, 7,
+            // 底面
+            0, 1, 5, 0, 5, 4,
+            // 左面
+            0, 3, 7, 0, 7, 4,
+            // 右面
+            1, 2, 6, 1, 6, 5,
+        ]);
+        this.setAttribute(
+            "position",
+            [
+                // 前面
+                -1.0,
+                -1.0,
+                1.0, // 顶点 0
+                1.0,
+                -1.0,
+                1.0, // 顶点 1
+                1.0,
+                1.0,
+                1.0, // 顶点 2
+                -1.0,
+                1.0,
+                1.0, // 顶点 3
+                // 后面
+                -1.0,
+                -1.0,
+                -1.0, // 顶点 4
+                1.0,
+                -1.0,
+                -1.0, // 顶点 5
+                1.0,
+                1.0,
+                -1.0, // 顶点 6
+                -1.0,
+                1.0,
+                -1.0, // 顶点 7
+            ].map((d) => d * 0.5)
+        );
+        this.setAttribute("normal", [
+            // 前面
+            -1.0,
+            -1.0,
+            1.0, // 顶点 0
+            1.0,
+            -1.0,
+            1.0, // 顶点 1
+            1.0,
+            1.0,
+            1.0, // 顶点 2
+            -1.0,
+            1.0,
+            1.0, // 顶点 3
+            // 后面
+            -1.0,
+            -1.0,
+            -1.0, // 顶点 4
+            1.0,
+            -1.0,
+            -1.0, // 顶点 5
+            1.0,
+            1.0,
+            -1.0, // 顶点 6
+            -1.0,
+            1.0,
+            -1.0, // 顶点 7
+        ]);
+        this.setAttribute("uv", [
+            // 前面
+            -1.0,
+            -1.0,
+            1.0, // 顶点 0
+            1.0,
+            -1.0,
+            1.0, // 顶点 1
+            1.0,
+            1.0,
+            1.0, // 顶点 2
+            -1.0,
+            1.0,
+            1.0, // 顶点 3
+            // 后面
+            -1.0,
+            -1.0,
+            -1.0, // 顶点 4
+            1.0,
+        ]);
     }
 }

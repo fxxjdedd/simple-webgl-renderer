@@ -121,7 +121,7 @@ export interface BufferAccessor {
     // NOTE: itemSize can retrive from `type` code.
 }
 
-export type BufferLayout<> = {
+export type BufferLayout = {
     [K: string]: {
         type: keyof ArrayCodeToTypeMap;
         components: 1 | 2 | 3 | 4;
@@ -216,10 +216,23 @@ export class StructuredData<TLayout extends BufferLayout> {
         }
     }
 
-    pickData(accessor: BufferAccessor) {
+    getCountOf(accessor: BufferAccessor) {
+        const { stride } = accessor;
+        const count = this.buffer.byteLength / stride;
+        return count;
+    }
+    getByteLengthOf(accessor: BufferAccessor) {
+        const count = this.getCountOf(accessor);
+        const { type, components } = accessor;
+        const oneLayoutSize = this._getOneOfLayoutSize(type, components);
+        const byteLength = count * oneLayoutSize;
+        return byteLength;
+    }
+
+    getDataOf(accessor: BufferAccessor) {
         const { type, components, offset, stride } = accessor;
         const oneLayoutSize = this._getOneOfLayoutSize(type, components);
-        const byteLength = (this.buffer.byteLength / stride) * oneLayoutSize;
+        const byteLength = this.getByteLengthOf(accessor);
 
         if (!Number.isInteger(byteLength)) {
             throw new Error(`Wrong accessor picking byte length: ${byteLength}.`);
@@ -231,7 +244,9 @@ export class StructuredData<TLayout extends BufferLayout> {
             const sub = this.buffer.subarray(i, i + oneLayoutSize);
             pickingResult.set(sub, j);
         }
-        return pickingResult;
+
+        const ctor = getArrayCtorOfCode(type);
+        return new ctor(pickingResult.buffer);
     }
 
     protected _appendTypedValue(type: number, value: number[], offset: number) {
