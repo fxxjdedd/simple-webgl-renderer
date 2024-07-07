@@ -1,4 +1,4 @@
-import { vec3 as Vector3, mat4 as Matrix4, quat as Quaterion } from "gl-matrix";
+import { Vec3, Mat4, Quat } from "gl-matrix";
 import { Geometry } from "../core";
 import { StructuredData, TypedArrayCode } from "../util";
 
@@ -74,7 +74,7 @@ export class BoxGeometry extends Geometry<typeof BoxGeometryBufferLayout> {
             const segCountX1 = segCountX + 1;
             const segCountY1 = segCountY + 1;
 
-            const vec = Vector3.create();
+            const vec = Vec3.create();
 
             let currentAccumulate = vertexCountAccumulate;
 

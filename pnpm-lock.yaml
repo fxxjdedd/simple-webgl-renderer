@@ -1,12 +1,12 @@
 lockfileVersion: 5.3
 
 specifiers:
-  gl-matrix: ^3.4.3
+  gl-matrix: ^4.0.0-beta.2
   typescript: ^4.9.3
   vite: ^4.0.0
 
 dependencies:
-  gl-matrix: 3.4.3
+  gl-matrix: 4.0.0-beta.2
 
 devDependencies:
   typescript: 4.9.5
@@ -250,8 +250,8 @@ packages:
     dev: true
     optional: true
 
-  /gl-matrix/3.4.3:
-    resolution: {integrity: sha512-wcCp8vu8FT22BnvKVPjXa/ICBWRq/zjFfdofZy1WSpQZpphblv12/bOQLBC1rMM7SGOFS9ltVmKOHil5+Ml7gA==}
+  /gl-matrix/4.0.0-beta.2:
+    resolution: {integrity: sha512-OF6IkQpMkF8p2CZF9EtzYZPlPaW3M41KMsgZGlTKmMv/nWaP6GMJi9V5tI+oPn8FG0io85Q5ZtKpCXP4u6YmDA==}
     dev: false
 
   /nanoid/3.3.7:

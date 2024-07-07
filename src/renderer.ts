@@ -1,4 +1,4 @@
-import { vec3 as Vector3, mat4 as Matrix4, quat as Quaterion, vec3 } from "gl-matrix";
+import { Vec3, Mat4, Quat } from "gl-matrix";
 import { pathtracerShader } from "./shader";
 import { GL_Program } from "./gl/glProgram";
 import { Camera, Material, Mesh, PathTracerMaterial } from "./core";
@@ -9,7 +9,7 @@ export class WebGLRenderer {
     programs: Map<string, GL_Program>;
     bindingStates: GL_BindingStates;
 
-    constructor(canvas: HTMLCanvasElement) {
+    constructor(public canvas: HTMLCanvasElement) {
         const gl = (this.gl = canvas.getContext("webgl2"));
         this.programs = new Map();
         this.programs.set(PathTracerMaterial.name, new GL_Program(gl, pathtracerShader));
@@ -17,7 +17,8 @@ export class WebGLRenderer {
         this.bindingStates = new GL_BindingStates(gl);
     }
     render(mesh: Mesh, camera: Camera) {
-        Matrix4.multiply(mesh.mvMatrix, camera.matrixWorldInv, mesh.matrixWorld);
+        camera.updateMatrixWorld();
+        Mat4.multiply(mesh.mvMatrix, camera.matrixWorldInv, mesh.matrixWorld);
 
         const program = this.programs.get(mesh.material.name);
         if (!program) {
