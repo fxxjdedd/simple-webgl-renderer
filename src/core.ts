@@ -31,6 +31,7 @@ class Geometry<T extends BufferLayout = BufferLayout> {
 }
 
 class Object3D {
+    parent: Object3D;
     matrix: Mat4;
     matrixWorld: Mat4;
     matrixWorldInv: Mat4;
@@ -54,16 +55,30 @@ class Object3D {
         this.mvMatrix = Mat4.create();
     }
 
-    updateMatrixWorld() {
+    updateMatrix() {
         const mat = Mat4.create();
         // scale
         Mat4.scale(mat, mat, this.scale);
-        this.matrixWorld = mat;
+        this.matrix = mat;
         // postion
         Mat4.translate(mat, mat, this.position);
         // rotation
         Mat4.fromQuat(this.rotation, this.quaterion);
         Mat4.multiply(mat, mat, this.rotation);
+    }
+
+    updateMatrixWorld() {
+        this.updateMatrix();
+        if (this.parent) {
+            this.matrixWorld = Mat4.multiply(
+                new Mat4(),
+                this.parent.matrixWorld,
+                this.matrix
+            ) as Mat4;
+        } else {
+            this.matrixWorld = Mat4.clone(this.matrix);
+        }
+
         // inv
         Mat4.invert(this.matrixWorldInv, this.matrixWorld);
     }
