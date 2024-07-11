@@ -1,1 +1,1 @@
-export * as pathtracerShader from "./pathtracer";
+export * as deferedPBRShader from "./defered-pbr";

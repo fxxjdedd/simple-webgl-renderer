@@ -5,15 +5,13 @@ import { DEG2RAD } from "./math/math";
 class Material {
     constructor(public name: string) {}
 }
-class PathTracerMaterial extends Material {
+class DeferedPBRMaterial extends Material {
     // TODO:
-    // static name = "PathTracerMaterial";
+    // static name = "DeferedPBRMaterial";
     constructor() {
-        super("PathTracerMaterial");
+        super("DeferedPBRMaterial");
     }
 }
-
-class PathTracerShader {}
 
 class Geometry<T extends BufferLayout = BufferLayout> {
     index: number[];
@@ -133,4 +131,4 @@ class PerspectiveCamera extends Camera {
         Mat4.perspectiveNO(this.projectionMatrix, zoomedFov, zoomedAspect, this.near, this.far);
     }
 }
-export { Material, PathTracerMaterial, Geometry, Object3D, Mesh, Camera, PerspectiveCamera };
+export { Material, DeferedPBRMaterial, Geometry, Object3D, Mesh, Camera, PerspectiveCamera };

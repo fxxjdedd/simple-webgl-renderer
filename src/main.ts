@@ -1,12 +1,12 @@
 import { OrbitControl } from "./control/OrbitControl";
-import { Mesh, PathTracerMaterial, PerspectiveCamera } from "./core";
+import { Mesh, DeferedPBRMaterial, PerspectiveCamera } from "./core";
 import { BoxGeometry } from "./geometry/BoxGeometry";
 import { WebGLRenderer } from "./renderer";
 
 const canvas = document.getElementById("webglcanvas") as HTMLCanvasElement;
 const renderer = new WebGLRenderer(canvas);
 
-const pathtracerMat = new PathTracerMaterial();
+const pathtracerMat = new DeferedPBRMaterial();
 const box = new BoxGeometry();
 const boxMesh = new Mesh(box, pathtracerMat);
 

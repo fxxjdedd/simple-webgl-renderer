@@ -1,7 +1,7 @@
 import { Vec3, Mat4, Quat } from "gl-matrix";
-import { pathtracerShader } from "./shader";
+import { deferedPBRShader } from "./shader";
 import { GL_Program } from "./gl/glProgram";
-import { Camera, Material, Mesh, PathTracerMaterial } from "./core";
+import { Camera, Material, Mesh, DeferedPBRMaterial } from "./core";
 import { GL_BindingState, GL_BindingStates } from "./gl/glBindingStates";
 
 export class WebGLRenderer {
@@ -12,7 +12,7 @@ export class WebGLRenderer {
     constructor(public canvas: HTMLCanvasElement) {
         const gl = (this.gl = canvas.getContext("webgl2"));
         this.programs = new Map();
-        this.programs.set(PathTracerMaterial.name, new GL_Program(gl, pathtracerShader));
+        this.programs.set(DeferedPBRMaterial.name, new GL_Program(gl, deferedPBRShader));
 
         this.bindingStates = new GL_BindingStates(gl);
     }
