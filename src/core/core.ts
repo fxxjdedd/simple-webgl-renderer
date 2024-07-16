@@ -1,15 +1,34 @@
 import { Vec3, Mat3, Mat4, Quat } from "gl-matrix";
-import { BufferLayout, StructuredData, TypedArrayCode } from "./util";
-import { DEG2RAD } from "./math/math";
+import { BufferLayout, StructuredData, TypedArrayCode } from "../util";
+import { DEG2RAD } from "../math/math";
+import { GL_Texture } from "../gl/glTexture";
 
 class Material {
+    map: GL_Texture;
+    uniforms: Record<string, any> = {};
     constructor(public name: string) {}
 }
-class DeferedPBRMaterial extends Material {
+class DeferredMaterial extends Material {
     // TODO:
-    // static name = "DeferedPBRMaterial";
+    // static name = "DeferredMaterial";
     constructor() {
-        super("DeferedPBRMaterial");
+        super("DeferredMaterial");
+    }
+}
+
+class PBRMaterial extends Material {
+    // TODO:
+    // static name = "PBRMaterial";
+    constructor() {
+        super("PBRMaterial");
+    }
+}
+
+class UnlitMaterial extends Material {
+    // TODO:
+    // static name = "UnlitMaterial";
+    constructor() {
+        super("UnlitMaterial");
     }
 }
 
@@ -68,11 +87,7 @@ class Object3D {
     updateMatrixWorld() {
         this.updateMatrix();
         if (this.parent) {
-            this.matrixWorld = Mat4.multiply(
-                new Mat4(),
-                this.parent.matrixWorld,
-                this.matrix
-            ) as Mat4;
+            this.matrixWorld = Mat4.multiply(new Mat4(), this.parent.matrixWorld, this.matrix) as Mat4;
         } else {
             this.matrixWorld = Mat4.clone(this.matrix);
         }
@@ -99,12 +114,7 @@ class Camera extends Object3D {
 
     lookAt(x, y, z) {
         Vec3.set(this.target, x, y, z);
-        const lookAtRotation = Mat4.lookAt(
-            Mat4.create(),
-            this.position,
-            Vec3.fromValues(x, y, z),
-            this.up
-        );
+        const lookAtRotation = Mat4.lookAt(Mat4.create(), this.position, Vec3.fromValues(x, y, z), this.up);
         const lookAtRotationMat3 = Mat3.fromMat4(Mat3.create(), lookAtRotation);
         // lookAtRotation is a viewmatrix, thus it applys to object,
         // but here we are applying to camera itself, so we need invert it.
@@ -131,4 +141,4 @@ class PerspectiveCamera extends Camera {
         Mat4.perspectiveNO(this.projectionMatrix, zoomedFov, zoomedAspect, this.near, this.far);
     }
 }
-export { Material, DeferedPBRMaterial, Geometry, Object3D, Mesh, Camera, PerspectiveCamera };
+export { Material, DeferredMaterial, PBRMaterial, UnlitMaterial, Geometry, Object3D, Mesh, Camera, PerspectiveCamera };

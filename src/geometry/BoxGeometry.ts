@@ -1,5 +1,5 @@
 import { Vec3, Mat4, Quat } from "gl-matrix";
-import { Geometry } from "../core";
+import { Geometry } from "../core/core";
 import { StructuredData, TypedArrayCode } from "../util";
 
 export const BoxGeometryBufferLayout = StructuredData.createLayout({

@@ -1,5 +1,5 @@
-import { Camera } from "../core";
-import { WebGLRenderer } from "../renderer";
+import { Camera } from "../core/core";
+import { WebGLRenderer } from "../core/renderer";
 import { Vec3, Vec2, Quat, Vec3Like } from "gl-matrix";
 
 enum ControlState {

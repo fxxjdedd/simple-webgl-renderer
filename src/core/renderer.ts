@@ -1,19 +1,25 @@
 import { Vec3, Mat4, Quat } from "gl-matrix";
-import { deferedPBRShader } from "./shader";
-import { GL_Program } from "./gl/glProgram";
-import { Camera, Material, Mesh, DeferedPBRMaterial } from "./core";
-import { GL_BindingState, GL_BindingStates } from "./gl/glBindingStates";
+import { deferredShader, pbrShader, unlitShader } from "../shader";
+import { GL_Program } from "../gl/glProgram";
+import { Camera, Material, Mesh, DeferredMaterial, PBRMaterial, UnlitMaterial } from "./core";
+import { GL_BindingState, GL_BindingStates } from "../gl/glBindingStates";
+import { WebGLRenderTarget } from "./renderTarget";
+import { GL_State } from "../gl/glState";
+import { GL_Texture } from "../gl/glTexture";
 
 export class WebGLRenderer {
     gl: WebGL2RenderingContext;
     programs: Map<string, GL_Program>;
+    state: GL_State;
     bindingStates: GL_BindingStates;
 
     constructor(public canvas: HTMLCanvasElement) {
         const gl = (this.gl = canvas.getContext("webgl2"));
         this.programs = new Map();
-        this.programs.set(DeferedPBRMaterial.name, new GL_Program(gl, deferedPBRShader));
-
+        this.programs.set(DeferredMaterial.name, new GL_Program(gl, deferredShader));
+        this.programs.set(PBRMaterial.name, new GL_Program(gl, pbrShader));
+        this.programs.set(UnlitMaterial.name, new GL_Program(gl, unlitShader));
+        this.state = new GL_State(gl);
         this.bindingStates = new GL_BindingStates(gl);
     }
     render(mesh: Mesh, camera: Camera) {
@@ -36,6 +42,16 @@ export class WebGLRenderer {
         program.setUniform("u_projMatrix", camera.projectionMatrix);
         program.setUniform("u_mvMatrix", mesh.mvMatrix);
 
+        for (const name in mesh.material.uniforms) {
+            const value = mesh.material.uniforms[name];
+            if (value instanceof GL_Texture) {
+                // TODO:
+                program.setUniform(name, value);
+            } else {
+                program.setUniform(name, value);
+            }
+        }
+
         let bindingState: GL_BindingState;
         if (!(bindingState = this.bindingStates.getBindingState(program, mesh.geometry))) {
             bindingState = this.bindingStates.setBindingState(program, mesh.geometry);
@@ -43,5 +59,9 @@ export class WebGLRenderer {
         bindingState.bind();
 
         program.draw(0, bindingState.indexBuffer.structuredData.getTrangleCount());
+    }
+
+    setRenderTarget(renderTarget: WebGLRenderTarget) {
+        renderTarget.setupRenderTarget(this.gl, this.state);
     }
 }

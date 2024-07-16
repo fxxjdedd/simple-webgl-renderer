@@ -1,4 +1,4 @@
-import { Geometry } from "../core";
+import { Geometry } from "../core/core";
 import { GL_IndexBuffer } from "./glIndexBuffer";
 import { GL_Program } from "./glProgram";
 import { GL_VertexAttributeBuffer } from "./glVertexAttributeBuffer";
