@@ -16,8 +16,7 @@ export class GL_Uniforms {
             this.list.push(u);
         } else if ((matches = namePath.match(/(\w+)\[(\d+)\]$/))) {
             const [_, id, index] = matches;
-            const h = (this.map[id] ||
-                new GL_HierarchyUniformStructure(id)) as GL_HierarchyUniformStructure;
+            const h = (this.map[id] || new GL_HierarchyUniformStructure(id)) as GL_HierarchyUniformStructure;
             const u = new GL_SimpleArrayUniform(+index, info, addr);
             h.map[+index] = u;
             h.list.push(u);
@@ -27,8 +26,7 @@ export class GL_Uniforms {
             }
         } else if ((matches = namePath.match(/(\w+)\.(\w+)$/))) {
             const [_, id, field] = matches;
-            const h = (this.map[id] ||
-                new GL_HierarchyUniformStructure(id)) as GL_HierarchyUniformStructure;
+            const h = (this.map[id] || new GL_HierarchyUniformStructure(id)) as GL_HierarchyUniformStructure;
             const u = new GL_BareUniform(field, info, addr);
             h.map[field] = u;
             h.list.push(u);
@@ -53,7 +51,7 @@ class GL_BareUniform implements UniformWrapper {
 
     setValue(gl: WebGL2RenderingContext, v) {
         const setter = getUniformFunction(gl, this.info.type);
-        setter.call(gl, this.addr, false, v);
+        setter.call(gl, this.addr, v);
     }
 }
 
@@ -130,11 +128,17 @@ function getUniformFunction(gl, type) {
         case gl.BOOL_VEC4:
             return gl.uniform4iv;
         case gl.FLOAT_MAT2:
-            return gl.uniformMatrix2fv;
+            return function (addr, v) {
+                gl.uniformMatrix2fv(addr, false, v);
+            };
         case gl.FLOAT_MAT3:
-            return gl.uniformMatrix3fv;
+            return function (addr, v) {
+                gl.uniformMatrix3fv(addr, false, v);
+            };
         case gl.FLOAT_MAT4:
-            return gl.uniformMatrix4fv;
+            return function (addr, v) {
+                gl.uniformMatrix4fv(addr, false, v);
+            };
         case gl.SAMPLER_2D:
             return gl.uniform1i;
         case gl.SAMPLER_CUBE:
