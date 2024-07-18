@@ -10,17 +10,26 @@ type RenderTargetOptions = GL_TextureParam & {
 
 export class WebGLRenderTarget {
     framebuffer: GL_FrameBuffer;
+    textures: GL_Texture[] = [];
 
-    constructor(public width: number, public height: number, public options: RenderTargetOptions) {}
+    get depthTexture() {
+        return this.framebuffer.depthTexture;
+    }
+
+    constructor(public width: number, public height: number, public options: RenderTargetOptions) {
+        for (let i = 0; i < this.options.colorsCount; i++) {
+            this.textures.push(new GL_Texture({ width, height }, options));
+        }
+    }
 
     setupRenderTarget(gl: WebGL2RenderingContext, state: GL_State) {
         if (!this.framebuffer) {
             this.framebuffer = new GL_FrameBuffer(gl, state);
         }
 
-        for (let i = 0; i < this.options.colorsCount; i++) {
-            this.framebuffer.addColorTexture(this.width, this.height, this.options);
-        }
+        this.textures.map((tex) => {
+            this.framebuffer.addColorTexture(tex);
+        });
 
         if (this.options.enableDepthBuffer) {
             this.framebuffer.enableDepthBuffer(this);

@@ -9,7 +9,7 @@ export const vertex = /* glsl */ `#version 300 es
 	uniform mat4 u_mvMatrix;
 
 	out vec3 v_normal;
-	out vec2 v_uv;
+	out highp vec2 v_uv;
 
 	void main() {
 		gl_Position = u_projMatrix * u_mvMatrix * vec4(position, 1.0);
@@ -24,11 +24,16 @@ export const fragment = /* glsl */ `#version 300 es
 
 
 	in vec3 v_normal;
-	in vec3 v_uv;
+	in highp vec2 v_uv;
 
 	out vec4 fragColor;
+    uniform sampler2D map;
 
 	void main() {
-		fragColor = vec4(v_normal, 1.0);
+		fragColor = texture(map, v_uv);
+		// fragColor = texture(map2, v_uv);
+		// fragColor = texture(map3, v_uv);
+		// fragColor = texture(map, vec2(0.5,0.5));
+		// fragColor = vec4(1.0, 0.0, 0.0, 1.0);
 	}
 `;

@@ -30,6 +30,10 @@ export class WebGLRenderer {
         if (!program) {
             throw new Error("No properly program found for material: " + mesh.material.name);
         }
+
+        GL_Texture.ResetTextureUnit();
+        this.state.bindTexture(null);
+
         this.gl.useProgram(program.program);
 
         this.gl.clearColor(0, 0, 0, 1);
@@ -45,8 +49,9 @@ export class WebGLRenderer {
         for (const name in mesh.material.uniforms) {
             const value = mesh.material.uniforms[name];
             if (value instanceof GL_Texture) {
-                // TODO:
-                program.setUniform(name, value);
+                this.state.bindTexture(value);
+                program.setUniform(name, value.unit);
+                // this.gl.uniform1i(this.gl.getUniformLocation(program.program, "map"), 5);
             } else {
                 program.setUniform(name, value);
             }
@@ -62,6 +67,18 @@ export class WebGLRenderer {
     }
 
     setRenderTarget(renderTarget: WebGLRenderTarget) {
-        renderTarget.setupRenderTarget(this.gl, this.state);
+        if (renderTarget !== null) {
+            renderTarget.setupRenderTarget(this.gl, this.state);
+
+            this.state.bindFrameBuffer(renderTarget.framebuffer);
+
+            this.state.drawBuffers(renderTarget);
+
+            // https://www.khronos.org/opengl/wiki/Framebuffer_Object#Framebuffer_Completeness
+            const r = this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER);
+        } else {
+            this.state.bindFrameBuffer(null);
+            this.state.drawBuffers(null);
+        }
     }
 }

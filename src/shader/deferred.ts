@@ -26,9 +26,12 @@ export const fragment = /* glsl */ `#version 300 es
 	in vec3 v_normal;
 	in vec3 v_uv;
 
-	out vec4 fragColor;
+	layout(location = 0) out vec4 g_diffuse;
+	layout(location = 1) out vec4 g_normal;
+
 
 	void main() {
-		fragColor = vec4(v_normal, 1.0);
+		g_diffuse = vec4(0.5, 0.0, 0.0, 1.0);
+		g_normal = vec4(0.0, 0.5, 0.0, 1.0);
 	}
 `;

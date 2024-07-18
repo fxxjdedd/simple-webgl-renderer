@@ -4,7 +4,16 @@ import { DEG2RAD } from "../math/math";
 import { GL_Texture } from "../gl/glTexture";
 
 class Material {
-    map: GL_Texture;
+    _map: GL_Texture;
+    set map(v) {
+        this._map = v;
+        this.uniforms["map"] = v;
+    }
+
+    get map() {
+        return this._map;
+    }
+
     uniforms: Record<string, any> = {};
     constructor(public name: string) {}
 }

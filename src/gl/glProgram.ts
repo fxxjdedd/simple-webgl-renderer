@@ -10,7 +10,7 @@ export class GL_Program {
     attributes: Record<string, { type: number; location: number; locationSize: number }>;
     uniforms: GL_Uniforms;
 
-    constructor(private gl: WebGL2RenderingContext, shader: Shader) {
+    constructor(private gl: WebGL2RenderingContext, private shader: Shader) {
         const program = gl.createProgram();
         this.program = program;
 
@@ -89,11 +89,6 @@ export class GL_Program {
 
     draw(start, count) {
         const gl = this.gl;
-        gl.drawElements(
-            gl.TRIANGLES,
-            count,
-            gl.UNSIGNED_SHORT,
-            start * Uint16Array.BYTES_PER_ELEMENT
-        );
+        gl.drawElements(gl.TRIANGLES, count, gl.UNSIGNED_SHORT, start * Uint16Array.BYTES_PER_ELEMENT);
     }
 }
