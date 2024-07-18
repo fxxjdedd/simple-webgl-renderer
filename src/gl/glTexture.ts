@@ -45,61 +45,17 @@ export class GL_Texture {
             gl.activeTexture(gl.TEXTURE0 + this.unit);
             gl.bindTexture(gl.TEXTURE_2D, this.texture);
 
-            if (this.isDepthTexture) {
-                gl.texImage2D(
-                    gl.TEXTURE_2D,
-                    0,
-                    this.getInternalFormat(gl, format),
-                    this.image.width,
-                    this.image.height,
-                    0,
-                    format,
-                    type,
-                    null
-                );
-            } else {
-                const pixel = new Uint8Array(4 * this.image.width * this.image.height).fill(128); // Red
-
-                gl.texImage2D(
-                    gl.TEXTURE_2D,
-                    0,
-                    this.getInternalFormat(gl, format),
-                    this.image.width,
-                    this.image.height,
-                    0,
-                    format,
-                    type,
-                    null
-                );
-                // gl.texImage2D(
-                //     gl.TEXTURE_2D,
-                //     0,
-                //     this.getInternalFormat(gl, format),
-                //     this.image.width,
-                //     this.image.height,
-                //     0,
-                //     format,
-                //     type,
-                //     null
-                // );
-                // gl.texImage2D(
-                //     gl.TEXTURE_2D,
-                //     0, // mip level
-                //     gl.LUMINANCE, // internal format
-                //     8, // width
-                //     8, // height
-                //     0, // border
-                //     gl.LUMINANCE, // format
-                //     gl.UNSIGNED_BYTE, // type
-                //     new Uint8Array([
-                //         // data
-                //         0xff, 0xcc, 0xff, 0xcc, 0xff, 0xcc, 0xff, 0xcc, 0xcc, 0xff, 0xcc, 0xff, 0xcc, 0xff, 0xcc, 0xff,
-                //         0xff, 0xcc, 0xff, 0xcc, 0xff, 0xcc, 0xff, 0xcc, 0xcc, 0xff, 0xcc, 0xff, 0xcc, 0xff, 0xcc, 0xff,
-                //         0xff, 0xcc, 0xff, 0xcc, 0xff, 0xcc, 0xff, 0xcc, 0xcc, 0xff, 0xcc, 0xff, 0xcc, 0xff, 0xcc, 0xff,
-                //         0xff, 0xcc, 0xff, 0xcc, 0xff, 0xcc, 0xff, 0xcc, 0xcc, 0xff, 0xcc, 0xff, 0xcc, 0xff, 0xcc, 0xff,
-                //     ])
-                // );
-            }
+            gl.texImage2D(
+                gl.TEXTURE_2D,
+                0,
+                this.getInternalFormat(gl, format),
+                this.image.width,
+                this.image.height,
+                0,
+                format,
+                type,
+                null
+            );
 
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrapS);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrapT);
@@ -111,7 +67,7 @@ export class GL_Texture {
     // TODO: gpu texture format
     getInternalFormat(gl: WebGL2RenderingContext, format) {
         // webgl2 must use DEPTH_COMPONENT<Num>
-        if (format == gl.DEPTH_COMPONENT) {
+        if (this.isDepthTexture) {
             return gl.DEPTH_COMPONENT16;
         }
         return format;
