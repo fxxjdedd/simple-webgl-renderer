@@ -112,6 +112,10 @@ class Mesh extends Object3D {
     }
 }
 
+class Scene extends Object3D {
+    objects: Object3D[] = [];
+}
+
 class Camera extends Object3D {
     projectionMatrix: Mat4;
     target: Vec3;
@@ -150,4 +154,15 @@ class PerspectiveCamera extends Camera {
         Mat4.perspectiveNO(this.projectionMatrix, zoomedFov, zoomedAspect, this.near, this.far);
     }
 }
-export { Material, DeferredMaterial, PBRMaterial, UnlitMaterial, Geometry, Object3D, Mesh, Camera, PerspectiveCamera };
+export {
+    Material,
+    DeferredMaterial,
+    PBRMaterial,
+    UnlitMaterial,
+    Geometry,
+    Object3D,
+    Mesh,
+    Scene,
+    Camera,
+    PerspectiveCamera,
+};

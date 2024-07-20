@@ -1,7 +1,7 @@
 import { Vec3, Mat4, Quat } from "gl-matrix";
 import { deferredShader, pbrShader, unlitShader } from "../shader";
 import { GL_Program } from "../gl/glProgram";
-import { Camera, Material, Mesh, DeferredMaterial, PBRMaterial, UnlitMaterial } from "./core";
+import { Camera, Material, Mesh, DeferredMaterial, PBRMaterial, UnlitMaterial, Scene } from "./core";
 import { GL_BindingState, GL_BindingStates } from "../gl/glBindingStates";
 import { WebGLRenderTarget } from "./renderTarget";
 import { GL_State } from "../gl/glState";
@@ -22,8 +22,24 @@ export class WebGLRenderer {
         this.state = new GL_State(gl);
         this.bindingStates = new GL_BindingStates(gl);
     }
-    render(mesh: Mesh, camera: Camera) {
+
+    render(scene: Scene, camera: Camera) {
+        this.gl.clearColor(0, 0, 0, 1);
+        this.gl.clearDepth(1);
+        this.gl.enable(this.gl.DEPTH_TEST);
+        this.gl.depthFunc(this.gl.LEQUAL);
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+
         camera.updateMatrixWorld();
+        for (const mesh of scene.objects) {
+            if (mesh instanceof Mesh) {
+                this.renderMesh(mesh, camera);
+            }
+        }
+    }
+
+    renderMesh(mesh: Mesh, camera: Camera) {
+        mesh.updateMatrixWorld();
         Mat4.multiply(mesh.mvMatrix, camera.matrixWorldInv, mesh.matrixWorld);
 
         const program = this.programs.get(mesh.material.name);
@@ -35,12 +51,6 @@ export class WebGLRenderer {
         this.state.bindTexture(null);
 
         this.gl.useProgram(program.program);
-
-        this.gl.clearColor(0, 0, 0, 1);
-        this.gl.clearDepth(1);
-        this.gl.enable(this.gl.DEPTH_TEST);
-        this.gl.depthFunc(this.gl.LEQUAL);
-        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
         // prettier-ignore
         program.setUniform("u_projMatrix", camera.projectionMatrix);
@@ -69,18 +79,21 @@ export class WebGLRenderer {
     setRenderTarget(renderTarget: WebGLRenderTarget) {
         if (renderTarget !== null) {
             renderTarget.setupRenderTarget(this.gl, this.state);
-            this.gl.viewport(0, 0, renderTarget.width, renderTarget.height);
 
             this.state.bindFrameBuffer(renderTarget.framebuffer);
-
             this.state.drawBuffers(renderTarget);
+            this.setViewport(0, 0, renderTarget.width, renderTarget.height);
 
             // https://www.khronos.org/opengl/wiki/Framebuffer_Object#Framebuffer_Completeness
-            const r = this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER);
+            // const r = this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER);
         } else {
             this.state.bindFrameBuffer(null);
             this.state.drawBuffers(null);
-            this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+            this.setViewport(0, 0, this.canvas.width, this.canvas.height);
         }
+    }
+
+    setViewport(x, y, w, h) {
+        this.gl.viewport(x, y, w, h);
     }
 }

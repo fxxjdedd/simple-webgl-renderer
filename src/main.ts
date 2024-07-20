@@ -1,10 +1,11 @@
 import { OrbitControl } from "./control/OrbitControl";
-import { Mesh, DeferredMaterial, PBRMaterial, PerspectiveCamera, UnlitMaterial } from "./core/core";
+import { Mesh, DeferredMaterial, PBRMaterial, PerspectiveCamera, UnlitMaterial, Scene } from "./core/core";
 import { BoxGeometry } from "./geometry/BoxGeometry";
 import { WebGLRenderer } from "./core/renderer";
 import { WebGLRenderTarget } from "./core/renderTarget";
 import { DepthTexture } from "./textures/depthTexture";
 import { GL_Texture } from "./gl/glTexture";
+import { Vec3 } from "gl-matrix";
 
 const canvas = document.getElementById("webglcanvas") as HTMLCanvasElement;
 const renderer = new WebGLRenderer(canvas);
@@ -44,29 +45,42 @@ const renderTarget = new WebGLRenderTarget(
 
 renderer.setRenderTarget(renderTarget);
 
-// const pbrMaterial = new PBRMaterial();
-// const boxMesh2 = new Mesh(box, pbrMaterial);
-// pbrMaterial.uniforms = {
-//     g_diffuse: renderTarget.textures[0],
-//     g_normal: renderTarget.textures[1],
-// };
+const pbrMaterial = new PBRMaterial();
+const boxMesh2 = new Mesh(box, pbrMaterial);
+pbrMaterial.uniforms = {
+    g_diffuse: renderTarget.textures[0],
+    g_normal: renderTarget.textures[1],
+};
 
-const unlitMaterial = new UnlitMaterial();
-const boxMesh4depthviewer = new Mesh(box, unlitMaterial);
+const unlitMaterial1 = new UnlitMaterial();
+const boxMesh4depthviewer1 = new Mesh(box, unlitMaterial1);
+boxMesh4depthviewer1.position = new Vec3(0, 0, 0);
+unlitMaterial1.map = renderTarget.textures[0];
 
-// unlitMaterial.map = renderTarget.depthTexture;
-unlitMaterial.map = renderTarget.textures[0];
-// unlitMaterial.depth = renderTarget.textures[1];
-console.log(renderTarget.textures);
+const unlitMaterial2 = new UnlitMaterial();
+const boxMesh4depthviewer2 = new Mesh(box, unlitMaterial2);
+boxMesh4depthviewer2.position = new Vec3(-2, 0, 0);
+unlitMaterial2.map = renderTarget.textures[1];
+
+const unlitMaterial3 = new UnlitMaterial();
+const boxMesh4depthviewer3 = new Mesh(box, unlitMaterial3);
+unlitMaterial3.map = renderTarget.depthTexture;
+
+const deferredScene = new Scene();
+deferredScene.objects = [boxMesh1];
+const viewportScene = new Scene();
+viewportScene.objects = [boxMesh4depthviewer1, boxMesh4depthviewer2];
+
 function animate() {
     renderer.setRenderTarget(renderTarget);
-    renderer.render(boxMesh1, camera);
+    renderer.render(deferredScene, camera);
 
     // // renderer.setRenderTarget(null);
     // // renderer.render(boxMesh2, camera);
 
     renderer.setRenderTarget(null);
-    renderer.render(boxMesh4depthviewer, camera);
+    renderer.setViewport(0, 0, canvas.width / 5, canvas.height / 5);
+    renderer.render(viewportScene, camera);
 
     requestAnimationFrame(() => {
         animate();
