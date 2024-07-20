@@ -69,6 +69,7 @@ export class WebGLRenderer {
     setRenderTarget(renderTarget: WebGLRenderTarget) {
         if (renderTarget !== null) {
             renderTarget.setupRenderTarget(this.gl, this.state);
+            this.gl.viewport(0, 0, renderTarget.width, renderTarget.height);
 
             this.state.bindFrameBuffer(renderTarget.framebuffer);
 
@@ -79,6 +80,7 @@ export class WebGLRenderer {
         } else {
             this.state.bindFrameBuffer(null);
             this.state.drawBuffers(null);
+            this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
         }
     }
 }

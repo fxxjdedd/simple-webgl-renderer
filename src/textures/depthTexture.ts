@@ -4,8 +4,8 @@ export class DepthTexture extends GL_Texture {
     constructor(gl: WebGL2RenderingContext) {
         super(
             {
-                width: 2048,
-                height: 1024,
+                width: 0,
+                height: 0,
             },
             {
                 wrapS: gl.CLAMP_TO_EDGE,

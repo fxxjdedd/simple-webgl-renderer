@@ -36,6 +36,8 @@ export class WebGLRenderTarget {
         }
 
         if (this.options.depthTexture) {
+            this.options.depthTexture.image.width = this.width;
+            this.options.depthTexture.image.height = this.height;
             this.framebuffer.setDepthTexture(this.options.depthTexture);
         }
     }

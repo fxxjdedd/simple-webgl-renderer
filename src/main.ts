@@ -26,17 +26,21 @@ orbitControl.setupEventListeners();
 
 const depthTexture = new DepthTexture(gl);
 
-const renderTarget = new WebGLRenderTarget(2048, 1024, {
-    wrapS: gl.REPEAT,
-    wrapT: gl.REPEAT,
-    magFilter: gl.LINEAR,
-    minFilter: gl.LINEAR,
-    format: gl.RGBA,
-    type: gl.UNSIGNED_BYTE,
-    enableDepthBuffer: true,
-    depthTexture: depthTexture,
-    colorsCount: 2,
-});
+const renderTarget = new WebGLRenderTarget(
+    canvas.width * window.devicePixelRatio,
+    canvas.height * window.devicePixelRatio,
+    {
+        wrapS: gl.REPEAT,
+        wrapT: gl.REPEAT,
+        magFilter: gl.LINEAR,
+        minFilter: gl.LINEAR,
+        format: gl.RGBA,
+        type: gl.UNSIGNED_BYTE,
+        enableDepthBuffer: true,
+        depthTexture: depthTexture,
+        colorsCount: 2,
+    }
+);
 
 renderer.setRenderTarget(renderTarget);
 
@@ -52,7 +56,7 @@ const boxMesh4depthviewer = new Mesh(box, unlitMaterial);
 
 // unlitMaterial.map = renderTarget.depthTexture;
 unlitMaterial.map = renderTarget.textures[0];
-unlitMaterial.map = renderTarget.textures[1];
+// unlitMaterial.depth = renderTarget.textures[1];
 console.log(renderTarget.textures);
 function animate() {
     renderer.setRenderTarget(renderTarget);
