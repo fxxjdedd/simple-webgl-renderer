@@ -12,6 +12,7 @@ export class WebGLRenderer {
     programs: Map<string, GL_Program>;
     state: GL_State;
     bindingStates: GL_BindingStates;
+    clearBits = 0;
 
     constructor(public canvas: HTMLCanvasElement) {
         const gl = (this.gl = canvas.getContext("webgl2"));
@@ -21,14 +22,16 @@ export class WebGLRenderer {
         this.programs.set(UnlitMaterial.name, new GL_Program(gl, unlitShader));
         this.state = new GL_State(gl);
         this.bindingStates = new GL_BindingStates(gl);
+        this.clearBits = this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT;
     }
 
     render(scene: Scene, camera: Camera) {
-        this.gl.clearColor(0, 0, 0, 1);
+        this.gl.clearColor(1, 1, 1, 1);
         this.gl.clearDepth(1);
         this.gl.enable(this.gl.DEPTH_TEST);
         this.gl.depthFunc(this.gl.LEQUAL);
-        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+        this.gl.clear(this.clearBits);
+        this.clearBits = this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT;
 
         camera.updateMatrixWorld();
         for (const mesh of scene.objects) {
@@ -95,5 +98,9 @@ export class WebGLRenderer {
 
     setViewport(x, y, w, h) {
         this.gl.viewport(x, y, w, h);
+    }
+
+    setClearbits(bits) {
+        this.clearBits = bits;
     }
 }

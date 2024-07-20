@@ -64,22 +64,25 @@ unlitMaterial2.map = renderTarget.textures[1];
 
 const unlitMaterial3 = new UnlitMaterial();
 const boxMesh4depthviewer3 = new Mesh(box, unlitMaterial3);
+boxMesh4depthviewer3.position = new Vec3(2, 0, 0);
 unlitMaterial3.map = renderTarget.depthTexture;
 
 const deferredScene = new Scene();
 deferredScene.objects = [boxMesh1];
 const viewportScene = new Scene();
-viewportScene.objects = [boxMesh4depthviewer1, boxMesh4depthviewer2];
+viewportScene.objects = [boxMesh4depthviewer1, boxMesh4depthviewer2, boxMesh4depthviewer3];
+const renderScene = new Scene();
+renderScene.objects = [boxMesh2];
 
 function animate() {
     renderer.setRenderTarget(renderTarget);
     renderer.render(deferredScene, camera);
 
-    // // renderer.setRenderTarget(null);
-    // // renderer.render(boxMesh2, camera);
-
     renderer.setRenderTarget(null);
+    renderer.render(renderScene, camera);
+
     renderer.setViewport(0, 0, canvas.width / 5, canvas.height / 5);
+    renderer.setClearbits(0);
     renderer.render(viewportScene, camera);
 
     requestAnimationFrame(() => {

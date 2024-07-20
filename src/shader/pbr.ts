@@ -1,4 +1,5 @@
 export const vertex = /* glsl */ `#version 300 es
+	precision highp float;
 	#pragma vscode_glsllint_stage : vert //pragma to set STAGE to 'vert'
 
 	in vec3 position;
@@ -22,13 +23,17 @@ export const fragment = /* glsl */ `#version 300 es
 	precision highp float;
 	#pragma vscode_glsllint_stage : frag //pragma to set STAGE to 'frag'
 
-
 	in vec3 v_normal;
-	in vec3 v_uv;
+	in vec2 v_uv;
+
+	uniform sampler2D g_diffuse;
+	uniform sampler2D g_normal;
 
 	out vec4 fragColor;
 
 	void main() {
-		fragColor = vec4(v_normal, 1.0);
+		fragColor = texture(g_diffuse, v_uv);
+		fragColor = texture(g_normal, v_uv);
+		fragColor = vec4(1.0,.0,.0, 1.0);
 	}
 `;

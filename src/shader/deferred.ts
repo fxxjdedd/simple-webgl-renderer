@@ -1,4 +1,5 @@
 export const vertex = /* glsl */ `#version 300 es
+    precision highp float;
 	#pragma vscode_glsllint_stage : vert //pragma to set STAGE to 'vert'
 
 	in vec3 position;
@@ -9,7 +10,7 @@ export const vertex = /* glsl */ `#version 300 es
 	uniform mat4 u_mvMatrix;
 
 	out vec3 v_normal;
-	out highp vec2 v_uv;
+	out vec2 v_uv;
 
 	void main() {
 		gl_Position = u_projMatrix * u_mvMatrix * vec4(position, 1.0);
@@ -24,7 +25,7 @@ export const fragment = /* glsl */ `#version 300 es
 
 
 	in vec3 v_normal;
-	in highp vec2 v_uv;
+	in vec2 v_uv;
 
 	layout(location = 0) out vec4 g_diffuse;
 	layout(location = 1) out vec4 g_normal;
