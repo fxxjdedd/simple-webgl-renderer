@@ -6,15 +6,15 @@ export const vertex = /* glsl */ `#version 300 es
 	in vec3 normal;
 	in vec2 uv;
 
-	uniform mat4 u_projMatrix;
-	uniform mat4 u_mvMatrix;
+	uniform mat4 projMatrix;
+	uniform mat4 mvMatrix;
 
 	out vec3 v_normal;
 	out vec2 v_uv;
 
 	void main() {
-		gl_Position = u_projMatrix * u_mvMatrix * vec4(position, 1.0);
-		v_normal = mat3(u_mvMatrix) * normal;
+		gl_Position = projMatrix * mvMatrix * vec4(position, 1.0);
+		v_normal = mat3(mvMatrix) * normal;
 		v_uv = uv;
 	}
 `;
@@ -33,6 +33,6 @@ export const fragment = /* glsl */ `#version 300 es
 
 	void main() {
 		g_diffuse = vec4(0.5, 0.0, 0.0, 1.0);
-		g_normal = vec4(0.0, 0.5, 0.0, 1.0);
+		g_normal = vec4(v_normal, 1.0);
 	}
 `;

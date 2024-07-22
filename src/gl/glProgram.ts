@@ -84,7 +84,11 @@ export class GL_Program {
 
     setUniform(name, value) {
         const glUniform = this.uniforms.map[name];
-        glUniform.setValue(this.gl, value);
+        if (glUniform) {
+            glUniform.setValue(this.gl, value);
+        } else {
+            // console.warn(`No glUniform found for uniform:${name}.`);
+        }
     }
 
     draw(start, count) {

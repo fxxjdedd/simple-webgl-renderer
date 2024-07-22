@@ -1,4 +1,4 @@
-import { Vec3, Mat4, Quat } from "gl-matrix";
+import { Vec3, Mat4, Quat, Vec4 } from "gl-matrix";
 import { deferredShader, pbrShader, unlitShader } from "../shader";
 import { GL_Program } from "../gl/glProgram";
 import { Camera, Material, Mesh, DeferredMaterial, PBRMaterial, UnlitMaterial, Scene } from "./core";
@@ -13,6 +13,7 @@ export class WebGLRenderer {
     state: GL_State;
     bindingStates: GL_BindingStates;
     clearBits = 0;
+    viewport: Vec4;
 
     constructor(public canvas: HTMLCanvasElement) {
         const gl = (this.gl = canvas.getContext("webgl2"));
@@ -23,15 +24,18 @@ export class WebGLRenderer {
         this.state = new GL_State(gl);
         this.bindingStates = new GL_BindingStates(gl);
         this.clearBits = this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT;
+        this.viewport = new Vec4(0, 0, this.canvas.width, this.canvas.height);
     }
 
     render(scene: Scene, camera: Camera) {
-        this.gl.clearColor(1, 1, 1, 1);
+        this.gl.clearColor(0, 0, 0, 1);
+        // NOTE: depth is not linear, see: https://learnopengl.com/Advanced-OpenGL/Depth-testing
         this.gl.clearDepth(1);
         this.gl.enable(this.gl.DEPTH_TEST);
-        this.gl.depthFunc(this.gl.LEQUAL);
-        this.gl.clear(this.clearBits);
-        this.clearBits = this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT;
+        this.gl.depthFunc(this.gl.LESS);
+        if (this.clearBits > 0) {
+            this.gl.clear(this.clearBits);
+        }
 
         camera.updateMatrixWorld();
         for (const mesh of scene.objects) {
@@ -39,6 +43,9 @@ export class WebGLRenderer {
                 this.renderMesh(mesh, camera);
             }
         }
+
+        this.clearBits = this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT;
+        this.viewport = new Vec4(0, 0, this.canvas.width, this.canvas.height);
     }
 
     renderMesh(mesh: Mesh, camera: Camera) {
@@ -56,8 +63,12 @@ export class WebGLRenderer {
         this.gl.useProgram(program.program);
 
         // prettier-ignore
-        program.setUniform("u_projMatrix", camera.projectionMatrix);
-        program.setUniform("u_mvMatrix", mesh.mvMatrix);
+        program.setUniform("projMatrix", camera.projectionMatrix);
+        program.setUniform("mvMatrix", mesh.mvMatrix);
+        program.setUniform("viewMatrix", camera.matrixWorldInv);
+        program.setUniform("modelMatrix", mesh.matrixWorld);
+        program.setUniform("useLinearDepth", true);
+        program.setUniform("viewport", this.viewport);
 
         for (const name in mesh.material.uniforms) {
             const value = mesh.material.uniforms[name];
@@ -97,6 +108,7 @@ export class WebGLRenderer {
     }
 
     setViewport(x, y, w, h) {
+        this.viewport.set([x, y, w, h]);
         this.gl.viewport(x, y, w, h);
     }
 

@@ -4,7 +4,6 @@ import { BoxGeometry } from "./geometry/BoxGeometry";
 import { WebGLRenderer } from "./core/renderer";
 import { WebGLRenderTarget } from "./core/renderTarget";
 import { DepthTexture } from "./textures/depthTexture";
-import { GL_Texture } from "./gl/glTexture";
 import { Vec3 } from "gl-matrix";
 
 const canvas = document.getElementById("webglcanvas") as HTMLCanvasElement;
@@ -16,11 +15,13 @@ const deferredMaterial = new DeferredMaterial();
 const box = new BoxGeometry();
 const boxMesh1 = new Mesh(box, deferredMaterial);
 
-const camera = new PerspectiveCamera(60, canvas.width / canvas.height);
+const camera = new PerspectiveCamera(60, canvas.width / canvas.height, 0.1, 10);
 camera.position.x = 1;
 camera.position.y = 1;
 camera.position.z = 2;
 camera.lookAt(0, 0, 0);
+
+console.log(camera);
 
 const orbitControl = new OrbitControl(renderer, camera);
 orbitControl.setupEventListeners();
@@ -37,7 +38,7 @@ const renderTarget = new WebGLRenderTarget(
         minFilter: gl.LINEAR,
         format: gl.RGBA,
         type: gl.UNSIGNED_BYTE,
-        enableDepthBuffer: true,
+        enableDepthBuffer: false,
         depthTexture: depthTexture,
         colorsCount: 2,
     }
@@ -50,6 +51,7 @@ const boxMesh2 = new Mesh(box, pbrMaterial);
 pbrMaterial.uniforms = {
     g_diffuse: renderTarget.textures[0],
     g_normal: renderTarget.textures[1],
+    g_depth: renderTarget.depthTexture,
 };
 
 const unlitMaterial1 = new UnlitMaterial();
@@ -79,9 +81,10 @@ function animate() {
     renderer.render(deferredScene, camera);
 
     renderer.setRenderTarget(null);
+
     renderer.render(renderScene, camera);
 
-    renderer.setViewport(0, 0, canvas.width / 5, canvas.height / 5);
+    renderer.setViewport(0, 0, canvas.width / 3, canvas.height / 3);
     renderer.setClearbits(0);
     renderer.render(viewportScene, camera);
 
