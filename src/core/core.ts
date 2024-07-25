@@ -33,11 +33,11 @@ class PBRMaterial extends Material {
     }
 }
 
-class UnlitMaterial extends Material {
+class DeferredDebugMaterial extends Material {
     // TODO:
-    // static name = "UnlitMaterial";
+    // static name = "DeferredDebugMaterial";
     constructor() {
-        super("UnlitMaterial");
+        super("DeferredDebugMaterial");
     }
 }
 
@@ -158,7 +158,7 @@ export {
     Material,
     DeferredMaterial,
     PBRMaterial,
-    UnlitMaterial,
+    DeferredDebugMaterial,
     Geometry,
     Object3D,
     Mesh,

@@ -1,5 +1,5 @@
 import { OrbitControl } from "./control/OrbitControl";
-import { Mesh, DeferredMaterial, PBRMaterial, PerspectiveCamera, UnlitMaterial, Scene } from "./core/core";
+import { Mesh, DeferredMaterial, PBRMaterial, PerspectiveCamera, DeferredDebugMaterial, Scene } from "./core/core";
 import { BoxGeometry } from "./geometry/BoxGeometry";
 import { WebGLRenderer } from "./core/renderer";
 import { WebGLRenderTarget } from "./core/renderTarget";
@@ -54,20 +54,20 @@ pbrMaterial.uniforms = {
     g_depth: renderTarget.depthTexture,
 };
 
-const unlitMaterial1 = new UnlitMaterial();
-const boxMesh4depthviewer1 = new Mesh(box, unlitMaterial1);
+const deferredDebugMaterial1 = new DeferredDebugMaterial();
+const boxMesh4depthviewer1 = new Mesh(box, deferredDebugMaterial1);
 boxMesh4depthviewer1.position = new Vec3(0, 0, 0);
-unlitMaterial1.map = renderTarget.textures[0];
+deferredDebugMaterial1.map = renderTarget.textures[0];
 
-const unlitMaterial2 = new UnlitMaterial();
-const boxMesh4depthviewer2 = new Mesh(box, unlitMaterial2);
+const deferredDebugMaterial2 = new DeferredDebugMaterial();
+const boxMesh4depthviewer2 = new Mesh(box, deferredDebugMaterial2);
 boxMesh4depthviewer2.position = new Vec3(-2, 0, 0);
-unlitMaterial2.map = renderTarget.textures[1];
+deferredDebugMaterial2.map = renderTarget.textures[1];
 
-const unlitMaterial3 = new UnlitMaterial();
-const boxMesh4depthviewer3 = new Mesh(box, unlitMaterial3);
+const deferredDebugMaterial3 = new DeferredDebugMaterial();
+const boxMesh4depthviewer3 = new Mesh(box, deferredDebugMaterial3);
 boxMesh4depthviewer3.position = new Vec3(2, 0, 0);
-unlitMaterial3.map = renderTarget.depthTexture;
+deferredDebugMaterial3.map = renderTarget.depthTexture;
 
 const deferredScene = new Scene();
 deferredScene.objects = [boxMesh1];

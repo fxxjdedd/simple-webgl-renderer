@@ -1,7 +1,7 @@
 import { Vec3, Mat4, Quat, Vec4 } from "gl-matrix";
-import { deferredShader, pbrShader, unlitShader } from "../shader";
+import { deferredShader, pbrShader, deferredDebugShader } from "../shader";
 import { GL_Program } from "../gl/glProgram";
-import { Camera, Material, Mesh, DeferredMaterial, PBRMaterial, UnlitMaterial, Scene } from "./core";
+import { Camera, Material, Mesh, DeferredMaterial, PBRMaterial, DeferredDebugMaterial, Scene } from "./core";
 import { GL_BindingState, GL_BindingStates } from "../gl/glBindingStates";
 import { WebGLRenderTarget } from "./renderTarget";
 import { GL_State } from "../gl/glState";
@@ -20,7 +20,7 @@ export class WebGLRenderer {
         this.programs = new Map();
         this.programs.set(DeferredMaterial.name, new GL_Program(gl, deferredShader));
         this.programs.set(PBRMaterial.name, new GL_Program(gl, pbrShader));
-        this.programs.set(UnlitMaterial.name, new GL_Program(gl, unlitShader));
+        this.programs.set(DeferredDebugMaterial.name, new GL_Program(gl, deferredDebugShader));
         this.state = new GL_State(gl);
         this.bindingStates = new GL_BindingStates(gl);
         this.clearBits = this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT;
