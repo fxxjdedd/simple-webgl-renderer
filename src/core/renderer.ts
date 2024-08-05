@@ -1,4 +1,4 @@
-import { Vec3, Mat4, Quat, Vec4 } from "gl-matrix";
+import { Vec3, Mat4, Quat, Vec4, Mat3 } from "gl-matrix";
 import { deferredShader, pbrShader, deferredDebugShader } from "../shader";
 import { GL_Program } from "../gl/glProgram";
 import { Camera, Material, Mesh, DeferredMaterial, PBRMaterial, DeferredDebugMaterial, Scene } from "./core";
@@ -6,6 +6,7 @@ import { GL_BindingState, GL_BindingStates } from "../gl/glBindingStates";
 import { WebGLRenderTarget } from "./renderTarget";
 import { GL_State } from "../gl/glState";
 import { GL_Texture } from "../gl/glTexture";
+import { Light } from "./light";
 
 export class WebGLRenderer {
     gl: WebGL2RenderingContext;
@@ -38,9 +39,10 @@ export class WebGLRenderer {
         }
 
         camera.updateMatrixWorld();
-        for (const mesh of scene.objects) {
-            if (mesh instanceof Mesh) {
-                this.renderMesh(mesh, camera);
+        for (const obj of scene.objects) {
+            if (obj instanceof Mesh) {
+                this.renderMesh(obj, camera);
+            } else if (obj instanceof Light) {
             }
         }
 
@@ -51,6 +53,8 @@ export class WebGLRenderer {
     renderMesh(mesh: Mesh, camera: Camera) {
         mesh.updateMatrixWorld();
         Mat4.multiply(mesh.mvMatrix, camera.matrixWorldInv, mesh.matrixWorld);
+
+        Mat3.fromMat4(mesh.normalMatrix, Mat4.clone(mesh.mvMatrix).invert().transpose());
 
         const program = this.programs.get(mesh.material.name);
         if (!program) {
@@ -67,6 +71,7 @@ export class WebGLRenderer {
         program.setUniform("mvMatrix", mesh.mvMatrix);
         program.setUniform("viewMatrix", camera.matrixWorldInv);
         program.setUniform("modelMatrix", mesh.matrixWorld);
+        program.setUniform("normalMatrix", mesh.normalMatrix);
         program.setUniform("useLinearDepth", true);
         program.setUniform("viewport", this.viewport);
 
@@ -75,7 +80,6 @@ export class WebGLRenderer {
             if (value instanceof GL_Texture) {
                 this.state.bindTexture(value);
                 program.setUniform(name, value.unit);
-                // this.gl.uniform1i(this.gl.getUniformLocation(program.program, "map"), 5);
             } else {
                 program.setUniform(name, value);
             }

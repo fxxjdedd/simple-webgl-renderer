@@ -5,6 +5,7 @@ import { WebGLRenderer } from "./core/renderer";
 import { WebGLRenderTarget } from "./core/renderTarget";
 import { DepthTexture } from "./textures/depthTexture";
 import { Vec3 } from "gl-matrix";
+import { DirectionalLight } from "./core/light";
 
 const canvas = document.getElementById("webglcanvas") as HTMLCanvasElement;
 const renderer = new WebGLRenderer(canvas);
@@ -12,7 +13,7 @@ const gl = renderer.gl;
 
 const deferredMaterial = new DeferredMaterial();
 
-const box = new BoxGeometry();
+const box = new BoxGeometry(2, 2, 2);
 const boxMesh1 = new Mesh(box, deferredMaterial);
 
 const camera = new PerspectiveCamera(60, canvas.width / canvas.height, 0.1, 10);
@@ -40,7 +41,7 @@ const renderTarget = new WebGLRenderTarget(
         type: gl.UNSIGNED_BYTE,
         enableDepthBuffer: false,
         depthTexture: depthTexture,
-        colorsCount: 2,
+        colorsCount: 3,
     }
 );
 
@@ -51,8 +52,12 @@ const boxMesh2 = new Mesh(box, pbrMaterial);
 pbrMaterial.uniforms = {
     g_diffuse: renderTarget.textures[0],
     g_normal: renderTarget.textures[1],
+    g_pos: renderTarget.textures[2],
     g_depth: renderTarget.depthTexture,
 };
+
+const dirLight = new DirectionalLight();
+dirLight.target = boxMesh2;
 
 const deferredDebugMaterial1 = new DeferredDebugMaterial();
 const boxMesh4depthviewer1 = new Mesh(box, deferredDebugMaterial1);
@@ -62,7 +67,7 @@ deferredDebugMaterial1.map = renderTarget.textures[0];
 const deferredDebugMaterial2 = new DeferredDebugMaterial();
 const boxMesh4depthviewer2 = new Mesh(box, deferredDebugMaterial2);
 boxMesh4depthviewer2.position = new Vec3(-2, 0, 0);
-deferredDebugMaterial2.map = renderTarget.textures[1];
+deferredDebugMaterial2.map = renderTarget.textures[2];
 
 const deferredDebugMaterial3 = new DeferredDebugMaterial();
 const boxMesh4depthviewer3 = new Mesh(box, deferredDebugMaterial3);
@@ -74,7 +79,7 @@ deferredScene.objects = [boxMesh1];
 const viewportScene = new Scene();
 viewportScene.objects = [boxMesh4depthviewer1, boxMesh4depthviewer2, boxMesh4depthviewer3];
 const renderScene = new Scene();
-renderScene.objects = [boxMesh2];
+renderScene.objects = [boxMesh2, dirLight];
 
 function animate() {
     renderer.setRenderTarget(renderTarget);

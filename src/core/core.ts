@@ -68,6 +68,7 @@ class Object3D {
     scale: Vec3;
 
     mvMatrix: Mat4;
+    normalMatrix: Mat3;
     constructor() {
         this.matrix = Mat4.create();
         this.matrixWorld = Mat4.create();
@@ -79,6 +80,7 @@ class Object3D {
         this.scale = Vec3.fromValues(1, 1, 1);
 
         this.mvMatrix = Mat4.create();
+        this.normalMatrix = Mat3.create();
     }
 
     updateMatrix() {

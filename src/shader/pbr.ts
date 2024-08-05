@@ -30,6 +30,7 @@ export const fragment = /* glsl */ `#version 300 es
 	uniform vec4 viewport;
 	uniform bool useLinearDepth;
 
+	uniform sampler2D g_pos;
 	uniform sampler2D g_diffuse;
 	uniform sampler2D g_normal;
 	uniform sampler2D g_depth;
@@ -55,6 +56,7 @@ export const fragment = /* glsl */ `#version 300 es
 		}
 		fragColor = texture(g_diffuse, uv);
 		fragColor = texture(g_normal, uv);
+		fragColor = texture(g_pos, uv);
 
 		// fragColor = vec4(vec3(depth), 1.0);
 	}
