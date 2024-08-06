@@ -7,11 +7,13 @@ import { WebGLRenderTarget } from "./renderTarget";
 import { GL_State } from "../gl/glState";
 import { GL_Texture } from "../gl/glTexture";
 import { Light } from "./light";
+import { GL_RenderState } from "../gl/glRenderState";
 
 export class WebGLRenderer {
     gl: WebGL2RenderingContext;
     programs: Map<string, GL_Program>;
     state: GL_State;
+    renderState: GL_RenderState;
     bindingStates: GL_BindingStates;
     clearBits = 0;
     viewport: Vec4;
@@ -26,6 +28,7 @@ export class WebGLRenderer {
         this.bindingStates = new GL_BindingStates(gl);
         this.clearBits = this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT;
         this.viewport = new Vec4(0, 0, this.canvas.width, this.canvas.height);
+        this.renderState = new GL_RenderState();
     }
 
     render(scene: Scene, camera: Camera) {
@@ -38,11 +41,21 @@ export class WebGLRenderer {
             this.gl.clear(this.clearBits);
         }
 
+        this.renderState.clear();
+
         camera.updateMatrixWorld();
+
+        for (const obj of scene.objects) {
+            if (obj instanceof Light) {
+                this.renderState.addLight(obj);
+            }
+        }
+
+        this.renderState.setup();
+
         for (const obj of scene.objects) {
             if (obj instanceof Mesh) {
                 this.renderMesh(obj, camera);
-            } else if (obj instanceof Light) {
             }
         }
 
@@ -53,7 +66,6 @@ export class WebGLRenderer {
     renderMesh(mesh: Mesh, camera: Camera) {
         mesh.updateMatrixWorld();
         Mat4.multiply(mesh.mvMatrix, camera.matrixWorldInv, mesh.matrixWorld);
-
         Mat3.fromMat4(mesh.normalMatrix, Mat4.clone(mesh.mvMatrix).invert().transpose());
 
         const program = this.programs.get(mesh.material.name);
@@ -72,8 +84,10 @@ export class WebGLRenderer {
         program.setUniform("viewMatrix", camera.matrixWorldInv);
         program.setUniform("modelMatrix", mesh.matrixWorld);
         program.setUniform("normalMatrix", mesh.normalMatrix);
-        program.setUniform("useLinearDepth", true);
         program.setUniform("viewport", this.viewport);
+        if (this.renderState.hasLight) {
+            program.setUniform("dirLight", this.renderState.lights.dirLights[0]);
+        }
 
         for (const name in mesh.material.uniforms) {
             const value = mesh.material.uniforms[name];

@@ -13,7 +13,7 @@ const gl = renderer.gl;
 
 const deferredMaterial = new DeferredMaterial();
 
-const box = new BoxGeometry(2, 2, 2);
+const box = new BoxGeometry();
 const boxMesh1 = new Mesh(box, deferredMaterial);
 
 const camera = new PerspectiveCamera(60, canvas.width / canvas.height, 0.1, 10);
@@ -57,7 +57,9 @@ pbrMaterial.uniforms = {
 };
 
 const dirLight = new DirectionalLight();
+dirLight.position = new Vec3(5, 5, 5);
 dirLight.target = boxMesh2;
+dirLight.color = new Vec3(1, 0, 0);
 
 const deferredDebugMaterial1 = new DeferredDebugMaterial();
 const boxMesh4depthviewer1 = new Mesh(box, deferredDebugMaterial1);
@@ -67,7 +69,7 @@ deferredDebugMaterial1.map = renderTarget.textures[0];
 const deferredDebugMaterial2 = new DeferredDebugMaterial();
 const boxMesh4depthviewer2 = new Mesh(box, deferredDebugMaterial2);
 boxMesh4depthviewer2.position = new Vec3(-2, 0, 0);
-deferredDebugMaterial2.map = renderTarget.textures[2];
+deferredDebugMaterial2.map = renderTarget.textures[1];
 
 const deferredDebugMaterial3 = new DeferredDebugMaterial();
 const boxMesh4depthviewer3 = new Mesh(box, deferredDebugMaterial3);

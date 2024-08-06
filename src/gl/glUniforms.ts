@@ -9,11 +9,16 @@ export class GL_Uniforms {
 
         let matches;
 
-        if ((matches = namePath.match(/(\w+)$/))) {
-            const [_, id] = matches;
-            const u = new GL_BareUniform(id, info, addr);
-            this.map[id] = u;
-            this.list.push(u);
+        if ((matches = namePath.match(/(\w+)\.(\w+)$/))) {
+            const [_, id, field] = matches;
+            const h = (this.map[id] || new GL_HierarchyUniformStructure(id)) as GL_HierarchyUniformStructure;
+            const u = new GL_BareUniform(field, info, addr);
+            h.map[field] = u;
+            h.list.push(u);
+            if (this.map[id] !== h) {
+                this.map[id] = h;
+                this.list.push(h);
+            }
         } else if ((matches = namePath.match(/(\w+)\[(\d+)\]$/))) {
             const [_, id, index] = matches;
             const h = (this.map[id] || new GL_HierarchyUniformStructure(id)) as GL_HierarchyUniformStructure;
@@ -24,16 +29,11 @@ export class GL_Uniforms {
                 this.map[id] = h;
                 this.list.push(h);
             }
-        } else if ((matches = namePath.match(/(\w+)\.(\w+)$/))) {
-            const [_, id, field] = matches;
-            const h = (this.map[id] || new GL_HierarchyUniformStructure(id)) as GL_HierarchyUniformStructure;
-            const u = new GL_BareUniform(field, info, addr);
-            h.map[field] = u;
-            h.list.push(u);
-            if (this.map[id] !== h) {
-                this.map[id] = h;
-                this.list.push(h);
-            }
+        } else if ((matches = namePath.match(/(\w+)$/))) {
+            const [_, id] = matches;
+            const u = new GL_BareUniform(id, info, addr);
+            this.map[id] = u;
+            this.list.push(u);
         }
 
         // todo: struct array
@@ -93,7 +93,17 @@ export class GL_HierarchyUniformStructure implements UniformWrapper {
     list: UniformWrapper[] = [];
     constructor(public id) {}
 
-    setValue(gl: WebGL2RenderingContext, v: any): void {}
+    setValue(gl: WebGL2RenderingContext, v: any): void {
+        for (const key of Object.keys(v)) {
+            const uniform = this.map[key];
+
+            if (uniform == undefined) {
+                throw new Error("Missing required glsl struct field: " + key);
+            }
+
+            uniform.setValue(gl, v[key]);
+        }
+    }
 }
 
 // uniform Block {

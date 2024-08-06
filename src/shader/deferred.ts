@@ -29,14 +29,6 @@ export const fragment = /* glsl */ `#version 300 es
 	precision highp float;
 	#pragma vscode_glsllint_stage : frag //pragma to set STAGE to 'frag'
 
-	struct DirLight {
-		vec3 direction;
-		vec3 color;
-		float intensity;
-	};
-
-	uniform DirLight dirLight;
-
 	in vec3 v_pos;
 	in vec3 v_normal;
 	in vec2 v_uv;
@@ -47,7 +39,7 @@ export const fragment = /* glsl */ `#version 300 es
 
 	void main() {
 
-		g_diffuse = vec4(0.5, 0.0, 0.0, 1.0);
+		g_diffuse = vec4(0.0, 0.5, 0.0, 1.0);
 		g_normal = vec4(v_normal, 1.0);
 		g_pos = vec4(v_pos, 1.0);
 	}

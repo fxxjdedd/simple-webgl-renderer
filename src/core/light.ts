@@ -3,7 +3,7 @@ import { Object3D } from "./core";
 
 export class Light extends Object3D {
     intensity = 1;
-    color = new Vec4(1, 1, 1, 1);
+    color = new Vec3(1, 1, 1, 1);
 
     constructor() {
         super();
