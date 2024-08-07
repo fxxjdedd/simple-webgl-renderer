@@ -1,5 +1,9 @@
 // https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/getActiveUniform
 
+import { Texture } from "../core/texture";
+import { GL_State } from "./glState";
+import { GL_Textures } from "./glTextures";
+
 export class GL_Uniforms {
     map: Record<string, UniformWrapper> = {};
     list: UniformWrapper[] = [];
@@ -41,7 +45,7 @@ export class GL_Uniforms {
 }
 
 interface UniformWrapper {
-    setValue(gl: WebGL2RenderingContext, v: any): void;
+    setValue(gl: WebGL2RenderingContext, v: any, textures?: GL_Textures): void;
 }
 
 // uniform vec4 a;
@@ -49,9 +53,9 @@ interface UniformWrapper {
 class GL_BareUniform implements UniformWrapper {
     constructor(public name, public info, public addr) {}
 
-    setValue(gl: WebGL2RenderingContext, v) {
+    setValue(gl: WebGL2RenderingContext, v, v2) {
         const setter = getUniformFunction(gl, this.info.type);
-        setter.call(gl, this.addr, v);
+        setter.call(gl, this.addr, v, v2);
     }
 }
 
@@ -150,7 +154,11 @@ function getUniformFunction(gl, type) {
                 gl.uniformMatrix4fv(addr, false, v);
             };
         case gl.SAMPLER_2D:
-            return gl.uniform1i;
+            return function (addr, texture: Texture, textures: GL_Textures) {
+                const unit = textures.allocTextureUnit(texture);
+                gl.uniform1i(addr, unit);
+                textures.uploadTexture(texture, unit);
+            };
         case gl.SAMPLER_CUBE:
             return gl.uniform1i;
         default:

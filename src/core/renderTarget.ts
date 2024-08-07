@@ -1,16 +1,17 @@
 import { GL_FrameBuffer } from "../gl/glFrameBuffer";
 import { GL_State } from "../gl/glState";
-import { GL_Texture, GL_TextureParam } from "../gl/glTexture";
+import { GL_Textures } from "../gl/glTextures";
+import { Texture, TextureParam } from "./texture";
 
-type RenderTargetOptions = GL_TextureParam & {
+type RenderTargetOptions = TextureParam & {
     enableDepthBuffer: boolean;
-    depthTexture: GL_Texture;
+    depthTexture: Texture;
     colorsCount: number;
 };
 
 export class WebGLRenderTarget {
     framebuffer: GL_FrameBuffer;
-    textures: GL_Texture[] = [];
+    textures: Texture[] = [];
 
     get depthTexture() {
         return this.framebuffer.depthTexture;
@@ -18,13 +19,15 @@ export class WebGLRenderTarget {
 
     constructor(public width: number, public height: number, public options: RenderTargetOptions) {
         for (let i = 0; i < this.options.colorsCount; i++) {
-            this.textures.push(new GL_Texture({ width, height }, options));
+            const texture = new Texture({ width, height }, options);
+            texture.isRenderTargetTexture = true;
+            this.textures.push(texture);
         }
     }
 
-    setupRenderTarget(gl: WebGL2RenderingContext, state: GL_State) {
+    setupRenderTarget(gl: WebGL2RenderingContext, textures: GL_Textures) {
         if (!this.framebuffer) {
-            this.framebuffer = new GL_FrameBuffer(gl, state);
+            this.framebuffer = new GL_FrameBuffer(gl, textures.state, textures);
         }
 
         this.textures.map((tex) => {

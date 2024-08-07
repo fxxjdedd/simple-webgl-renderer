@@ -1,0 +1,75 @@
+import { Texture } from "../core/texture";
+import { GL_State } from "./glState";
+
+function getInternalFormat(gl: WebGL2RenderingContext, texture: Texture) {
+    // webgl2 must use DEPTH_COMPONENT<Num>
+    if (texture.isDepthTexture) {
+        return gl.DEPTH_COMPONENT16;
+    }
+    return texture.param.format;
+}
+
+export class GL_Textures {
+    unit = 0;
+    textures = new Map();
+    textureToUnits = new Map();
+
+    constructor(private gl: WebGL2RenderingContext, public state: GL_State) {}
+
+    allocTextureUnit(texture: Texture) {
+        const unit = this.unit++;
+        this.textureToUnits.set(texture, unit);
+        return unit;
+    }
+
+    resetTextureUnit() {
+        this.unit = 0;
+        this.textureToUnits.clear();
+    }
+
+    getTextureLocation(texture: Texture) {
+        if (!this.textures.has(texture)) {
+            throw new Error("texture not init");
+        }
+        return this.textures.get(texture);
+    }
+
+    initTexture(texture: Texture) {
+        const gl = this.gl;
+        if (!this.textures.has(texture)) {
+            const texLocation = gl.createTexture();
+            this.textures.set(texture, texLocation);
+
+            // it is safe to always init texture at unit 0
+            this.state.bindTexture(0, texLocation);
+
+            const { width, height } = texture.image;
+            const { wrapS, wrapT, magFilter, minFilter, format, type } = texture.param;
+            gl.texImage2D(gl.TEXTURE_2D, 0, getInternalFormat(gl, texture), width, height, 0, format, type, null);
+
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrapS);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrapT);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minFilter);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, magFilter);
+        }
+
+        const glTexture = this.textures.get(texture);
+        return glTexture;
+    }
+
+    uploadTexture(texture: Texture, unit: number) {
+        const gl = this.gl;
+        const { format, type } = texture.param;
+
+        this.initTexture(texture);
+
+        const texLocation = this.getTextureLocation(texture);
+        this.state.bindTexture(unit, texLocation);
+
+        if (!texture.isRenderTargetTexture && texture.image instanceof Image) {
+            gl.texImage2D(gl.TEXTURE_2D, 0, getInternalFormat(gl, texture), format, type, texture.image);
+        }
+    }
+
+    // TODO: gpu texture format
+}

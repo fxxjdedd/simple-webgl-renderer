@@ -1,11 +1,11 @@
 import { Vec3, Mat3, Mat4, Quat } from "gl-matrix";
 import { BufferLayout, StructuredData, TypedArrayCode } from "../util";
 import { DEG2RAD } from "../math/math";
-import { GL_Texture } from "../gl/glTexture";
+import { Texture } from "./texture";
 
 class Material {
-    _map: GL_Texture;
-    set map(v) {
+    _map: Texture;
+    set map(v: Texture) {
         this._map = v;
         this.uniforms["map"] = v;
     }

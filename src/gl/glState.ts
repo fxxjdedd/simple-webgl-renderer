@@ -1,20 +1,16 @@
 import { WebGLRenderTarget } from "../core/renderTarget";
+import { Texture } from "../core/texture";
 import { GL_FrameBuffer } from "./glFrameBuffer";
-import { GL_Texture } from "./glTexture";
+import { GL_Textures } from "./glTextures";
 
 // only change webgl state here
 export class GL_State {
     constructor(private gl: WebGL2RenderingContext) {}
 
-    bindTexture(texture: GL_Texture) {
+    bindTexture(unit: number, texture: WebGLTexture) {
         const gl = this.gl;
-        if (texture !== null) {
-            this.gl.activeTexture(gl.TEXTURE0 + texture.unit);
-            this.gl.bindTexture(gl.TEXTURE_2D, texture.texture);
-        } else {
-            this.gl.activeTexture(gl.TEXTURE0);
-            this.gl.bindTexture(gl.TEXTURE_2D, null);
-        }
+        this.gl.activeTexture(gl.TEXTURE0 + unit);
+        this.gl.bindTexture(gl.TEXTURE_2D, texture);
     }
 
     bindFrameBuffer(framebuffer: GL_FrameBuffer) {

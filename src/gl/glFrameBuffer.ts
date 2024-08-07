@@ -1,32 +1,33 @@
 import { WebGLRenderTarget } from "../core/renderTarget";
+import { Texture } from "../core/texture";
 import { GL_State } from "./glState";
-import { GL_Texture, GL_TextureParam } from "./glTexture";
+import { GL_Textures } from "./glTextures";
 
 export class GL_FrameBuffer {
-    depthTexture: GL_Texture;
-    colorTextures = [];
+    depthTexture: Texture;
+    colorTextures: Texture[] = [];
     fbo: WebGLFramebuffer;
     depthBuffer: WebGLRenderbuffer;
-    constructor(private gl: WebGL2RenderingContext, private state: GL_State) {
+    constructor(private gl: WebGL2RenderingContext, private state: GL_State, private textures: GL_Textures) {
         this.fbo = gl.createFramebuffer();
     }
 
-    addColorTexture(texture: GL_Texture) {
+    addColorTexture(texture: Texture) {
         const gl = this.gl;
         const state = this.state;
 
         if (!this.colorTextures.includes(texture)) {
-            texture.init(gl);
             this.colorTextures.push(texture);
+            this.textures.initTexture(texture);
         }
 
-        state.bindTexture(texture);
+        const texLocation = this.textures.getTextureLocation(texture);
 
         const attachCount = this.colorTextures.length - 1;
 
         state.bindFrameBuffer(this);
 
-        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0 + attachCount, gl.TEXTURE_2D, texture.texture, 0);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0 + attachCount, gl.TEXTURE_2D, texLocation, 0);
 
         state.bindFrameBuffer(null);
         return texture;
@@ -48,20 +49,24 @@ export class GL_FrameBuffer {
         state.bindFrameBuffer(null);
     }
 
-    setDepthTexture(texture: GL_Texture) {
+    setDepthTexture(texture: Texture) {
         const gl = this.gl;
         const state = this.state;
 
-        texture.init(gl);
+        // texture.init(gl);
 
-        this.depthTexture = texture;
+        if (this.depthTexture !== texture) {
+            this.depthTexture = texture;
+            this.textures.initTexture(texture);
+        }
 
-        state.bindTexture(texture);
+        const texLocation = this.textures.getTextureLocation(texture);
+
         state.bindFrameBuffer(this);
 
-        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, texture.texture, 0);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, texLocation, 0);
 
         state.bindFrameBuffer(null);
-        state.bindTexture(null);
+        state.bindTexture(0, null);
     }
 }

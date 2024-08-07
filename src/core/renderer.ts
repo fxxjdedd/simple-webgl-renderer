@@ -5,14 +5,16 @@ import { Camera, Material, Mesh, Scene } from "./core";
 import { GL_BindingState, GL_BindingStates } from "../gl/glBindingStates";
 import { WebGLRenderTarget } from "./renderTarget";
 import { GL_State } from "../gl/glState";
-import { GL_Texture } from "../gl/glTexture";
 import { Light } from "./light";
 import { GL_RenderState } from "../gl/glRenderState";
 import { DeferredDebugMaterial, DeferredMaterial, PBRMaterial } from "../materials";
+import { GL_Textures } from "../gl/glTextures";
+import { Texture } from "./texture";
 
 export class WebGLRenderer {
     gl: WebGL2RenderingContext;
     programs: Map<string, GL_Program>;
+    textures: GL_Textures;
     state: GL_State;
     renderState: GL_RenderState;
     bindingStates: GL_BindingStates;
@@ -26,6 +28,7 @@ export class WebGLRenderer {
         this.programs.set(PBRMaterial.name, new GL_Program(gl, pbrShader));
         this.programs.set(DeferredDebugMaterial.name, new GL_Program(gl, deferredDebugShader));
         this.state = new GL_State(gl);
+        this.textures = new GL_Textures(gl, this.state);
         this.bindingStates = new GL_BindingStates(gl);
         this.clearBits = this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT;
         this.viewport = new Vec4(0, 0, this.canvas.width, this.canvas.height);
@@ -74,8 +77,9 @@ export class WebGLRenderer {
             throw new Error("No properly program found for material: " + mesh.material.name);
         }
 
-        GL_Texture.ResetTextureUnit();
-        this.state.bindTexture(null);
+        this.textures.resetTextureUnit();
+        this.gl.createTexture();
+        this.state.bindTexture(0, null);
 
         this.gl.useProgram(program.program);
 
@@ -92,9 +96,8 @@ export class WebGLRenderer {
 
         for (const name in mesh.material.uniforms) {
             const value = mesh.material.uniforms[name];
-            if (value instanceof GL_Texture) {
-                this.state.bindTexture(value);
-                program.setUniform(name, value.unit);
+            if (value instanceof Texture) {
+                program.setUniform(name, value, this.textures);
             } else {
                 program.setUniform(name, value);
             }
@@ -111,7 +114,7 @@ export class WebGLRenderer {
 
     setRenderTarget(renderTarget: WebGLRenderTarget) {
         if (renderTarget !== null) {
-            renderTarget.setupRenderTarget(this.gl, this.state);
+            renderTarget.setupRenderTarget(this.gl, this.textures);
 
             this.state.bindFrameBuffer(renderTarget.framebuffer);
             this.state.drawBuffers(renderTarget);

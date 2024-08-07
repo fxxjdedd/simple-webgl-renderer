@@ -1,6 +1,6 @@
-import { GL_Texture } from "../gl/glTexture";
+import { Texture } from "../core/texture";
 
-export class DepthTexture extends GL_Texture {
+export class DepthTexture extends Texture {
     constructor(gl: WebGL2RenderingContext) {
         super(
             {

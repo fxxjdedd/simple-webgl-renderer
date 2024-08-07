@@ -1,3 +1,5 @@
+import { GL_State } from "./glState";
+import { GL_Textures } from "./glTextures";
 import { GL_Uniforms } from "./glUniforms";
 
 export interface Shader {
@@ -82,10 +84,10 @@ export class GL_Program {
         return attributes;
     }
 
-    setUniform(name, value) {
+    setUniform(name, value, textures?: GL_Textures) {
         const glUniform = this.uniforms.map[name];
         if (glUniform) {
-            glUniform.setValue(this.gl, value);
+            glUniform.setValue(this.gl, value, textures);
         } else {
             // console.warn(`No glUniform found for uniform:${name}.`);
         }
