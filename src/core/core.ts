@@ -17,30 +17,6 @@ class Material {
     uniforms: Record<string, any> = {};
     constructor(public name: string) {}
 }
-class DeferredMaterial extends Material {
-    // TODO:
-    // static name = "DeferredMaterial";
-    constructor() {
-        super("DeferredMaterial");
-    }
-}
-
-class PBRMaterial extends Material {
-    // TODO:
-    // static name = "PBRMaterial";
-    constructor() {
-        super("PBRMaterial");
-    }
-}
-
-class DeferredDebugMaterial extends Material {
-    // TODO:
-    // static name = "DeferredDebugMaterial";
-    constructor() {
-        super("DeferredDebugMaterial");
-    }
-}
-
 class Geometry<T extends BufferLayout = BufferLayout> {
     index: number[];
     attributes: Record<keyof T, number[]>;
@@ -55,7 +31,6 @@ class Geometry<T extends BufferLayout = BufferLayout> {
         this.attributes[name] = attrBuffer;
     }
 }
-
 class Object3D {
     parent: Object3D;
     matrix: Mat4;
@@ -156,15 +131,4 @@ class PerspectiveCamera extends Camera {
         Mat4.perspectiveNO(this.projectionMatrix, zoomedFov, zoomedAspect, this.near, this.far);
     }
 }
-export {
-    Material,
-    DeferredMaterial,
-    PBRMaterial,
-    DeferredDebugMaterial,
-    Geometry,
-    Object3D,
-    Mesh,
-    Scene,
-    Camera,
-    PerspectiveCamera,
-};
+export { Material, Geometry, Object3D, Mesh, Scene, Camera, PerspectiveCamera };

@@ -1,11 +1,12 @@
 import { OrbitControl } from "./control/OrbitControl";
-import { Mesh, DeferredMaterial, PBRMaterial, PerspectiveCamera, DeferredDebugMaterial, Scene } from "./core/core";
+import { Mesh, PerspectiveCamera, Scene } from "./core/core";
 import { BoxGeometry } from "./geometry/BoxGeometry";
 import { WebGLRenderer } from "./core/renderer";
 import { WebGLRenderTarget } from "./core/renderTarget";
 import { DepthTexture } from "./textures/depthTexture";
 import { Vec3 } from "gl-matrix";
 import { DirectionalLight } from "./core/light";
+import { DeferredDebugMaterial, DeferredMaterial, PBRMaterial } from "./materials";
 
 const canvas = document.getElementById("webglcanvas") as HTMLCanvasElement;
 const renderer = new WebGLRenderer(canvas);

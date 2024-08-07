@@ -1,13 +1,14 @@
 import { Vec3, Mat4, Quat, Vec4, Mat3 } from "gl-matrix";
 import { deferredShader, pbrShader, deferredDebugShader } from "../shader";
 import { GL_Program } from "../gl/glProgram";
-import { Camera, Material, Mesh, DeferredMaterial, PBRMaterial, DeferredDebugMaterial, Scene } from "./core";
+import { Camera, Material, Mesh, Scene } from "./core";
 import { GL_BindingState, GL_BindingStates } from "../gl/glBindingStates";
 import { WebGLRenderTarget } from "./renderTarget";
 import { GL_State } from "../gl/glState";
 import { GL_Texture } from "../gl/glTexture";
 import { Light } from "./light";
 import { GL_RenderState } from "../gl/glRenderState";
+import { DeferredDebugMaterial, DeferredMaterial, PBRMaterial } from "../materials";
 
 export class WebGLRenderer {
     gl: WebGL2RenderingContext;

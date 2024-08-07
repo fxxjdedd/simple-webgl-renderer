@@ -11,7 +11,7 @@ export class GL_Lights {
             const light = lights[i];
             if (light instanceof DirectionalLight) {
                 const { color, intensity, target, position } = light;
-                // NOTE: here is Wo
+                // NOTE: here is Wi
                 const direction = Vec3.sub(Vec3.create(), position, target.position);
                 this.dirLights[dirLightIndex] = {
                     direction,
