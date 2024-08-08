@@ -10,6 +10,7 @@ import { GL_RenderState } from "../gl/glRenderState";
 import { DeferredDebugMaterial, DeferredMaterial, PBRMaterial } from "../materials";
 import { GL_Textures } from "../gl/glTextures";
 import { Texture } from "./texture";
+import { GL_ConstantsMapping } from "../gl/glConstantsMapping";
 
 export class WebGLRenderer {
     gl: WebGL2RenderingContext;
@@ -18,6 +19,7 @@ export class WebGLRenderer {
     state: GL_State;
     renderState: GL_RenderState;
     bindingStates: GL_BindingStates;
+    constantsMapping: GL_ConstantsMapping;
     clearBits = 0;
     viewport: Vec4;
 
@@ -28,7 +30,8 @@ export class WebGLRenderer {
         this.programs.set(PBRMaterial.name, new GL_Program(gl, pbrShader));
         this.programs.set(DeferredDebugMaterial.name, new GL_Program(gl, deferredDebugShader));
         this.state = new GL_State(gl);
-        this.textures = new GL_Textures(gl, this.state);
+        this.constantsMapping = new GL_ConstantsMapping(gl);
+        this.textures = new GL_Textures(gl, this.constantsMapping, this.state);
         this.bindingStates = new GL_BindingStates(gl);
         this.clearBits = this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT;
         this.viewport = new Vec4(0, 0, this.canvas.width, this.canvas.height);

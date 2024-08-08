@@ -35,6 +35,9 @@ export const fragment = /* glsl */ `#version 300 es
 
 	uniform DirLight dirLight;
 
+	uniform sampler2D map;
+	uniform sampler2D normalMap;
+
 	uniform sampler2D g_pos;
 	uniform sampler2D g_diffuse;
 	uniform sampler2D g_normal;
@@ -68,5 +71,8 @@ export const fragment = /* glsl */ `#version 300 es
 		diffuse += dirLightColor;
 
 		fragColor = diffuse;
+
+		vec4 normalColor = texture(normalMap, v_uv);
+		fragColor = normalColor;
 	}
 `;

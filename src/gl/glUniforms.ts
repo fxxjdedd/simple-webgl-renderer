@@ -160,7 +160,11 @@ function getUniformFunction(gl, type) {
                 textures.uploadTexture(texture, unit);
             };
         case gl.SAMPLER_CUBE:
-            return gl.uniform1i;
+            return function (addr, texture: Texture, textures: GL_Textures) {
+                const unit = textures.allocTextureUnit(texture);
+                gl.uniform1i(addr, unit);
+                textures.uploadTexture(texture, unit);
+            };
         default:
             throw new Error(`Unsupported uniform type: ${type}`);
     }

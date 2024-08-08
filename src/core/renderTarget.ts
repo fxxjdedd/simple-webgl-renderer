@@ -1,9 +1,8 @@
 import { GL_FrameBuffer } from "../gl/glFrameBuffer";
-import { GL_State } from "../gl/glState";
 import { GL_Textures } from "../gl/glTextures";
 import { Texture, TextureParam } from "./texture";
 
-type RenderTargetOptions = TextureParam & {
+type RenderTargetOptions = Partial<TextureParam> & {
     enableDepthBuffer: boolean;
     depthTexture: Texture;
     colorsCount: number;
@@ -17,9 +16,10 @@ export class WebGLRenderTarget {
         return this.framebuffer.depthTexture;
     }
 
-    constructor(public width: number, public height: number, public options: RenderTargetOptions) {
+    constructor(public width: number, public height: number, public options?: RenderTargetOptions) {
         for (let i = 0; i < this.options.colorsCount; i++) {
-            const texture = new Texture({ width, height }, options);
+            const { enableDepthBuffer, depthTexture, colorsCount, ...textureParam } = options;
+            const texture = new Texture({ width, height }, textureParam);
             texture.isRenderTargetTexture = true;
             this.textures.push(texture);
         }

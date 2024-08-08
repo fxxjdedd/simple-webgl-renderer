@@ -4,7 +4,8 @@ import { DEG2RAD } from "../math/math";
 import { Texture } from "./texture";
 
 class Material {
-    _map: Texture;
+    private _map: Texture;
+    private _normalMap: Texture;
     set map(v: Texture) {
         this._map = v;
         this.uniforms["map"] = v;
@@ -12,6 +13,15 @@ class Material {
 
     get map() {
         return this._map;
+    }
+
+    set normalMap(v: Texture) {
+        this._normalMap = v;
+        this.uniforms["normalMap"] = v;
+    }
+
+    get normalMap() {
+        return this._normalMap;
     }
 
     uniforms: Record<string, any> = {};

@@ -1,4 +1,5 @@
 import { Texture } from "../core/texture";
+import { GL_ConstantsMapping } from "./glConstantsMapping";
 import { GL_State } from "./glState";
 
 function getInternalFormat(gl: WebGL2RenderingContext, texture: Texture) {
@@ -13,8 +14,11 @@ export class GL_Textures {
     unit = 0;
     textures = new Map();
     textureToUnits = new Map();
-
-    constructor(private gl: WebGL2RenderingContext, public state: GL_State) {}
+    constructor(
+        private gl: WebGL2RenderingContext,
+        private constantsMapping: GL_ConstantsMapping,
+        public state: GL_State
+    ) {}
 
     allocTextureUnit(texture: Texture) {
         const unit = this.unit++;
@@ -39,18 +43,23 @@ export class GL_Textures {
         if (!this.textures.has(texture)) {
             const texLocation = gl.createTexture();
             this.textures.set(texture, texLocation);
+        }
 
+        if (texture.isDirty) {
             // it is safe to always init texture at unit 0
+            const texLocation = this.textures.get(texture);
             this.state.bindTexture(0, texLocation);
 
-            const { width, height } = texture.image;
-            const { wrapS, wrapT, magFilter, minFilter, format, type } = texture.param;
-            gl.texImage2D(gl.TEXTURE_2D, 0, getInternalFormat(gl, texture), width, height, 0, format, type, null);
-
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrapS);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrapT);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minFilter);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, magFilter);
+            if (texture.image != null) {
+                const { width, height } = texture.image;
+                const { wrapS, wrapT, magFilter, minFilter, format, type } = this.getGLTextureParams(texture.param);
+                gl.texImage2D(gl.TEXTURE_2D, 0, getInternalFormat(gl, texture), width, height, 0, format, type, null);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrapS);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrapT);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minFilter);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, magFilter);
+            }
+            texture.isDirty = false;
         }
 
         const glTexture = this.textures.get(texture);
@@ -69,6 +78,17 @@ export class GL_Textures {
         if (!texture.isRenderTargetTexture && texture.image instanceof Image) {
             gl.texImage2D(gl.TEXTURE_2D, 0, getInternalFormat(gl, texture), format, type, texture.image);
         }
+    }
+
+    private getGLTextureParams<T extends object>(params: T) {
+        const glPrams: T = params;
+        for (const key of Object.keys(params)) {
+            const value = params[key];
+            const glValue = this.constantsMapping.getGLConstant(value);
+
+            glPrams[key] = glValue;
+        }
+        return glPrams;
     }
 
     // TODO: gpu texture format
