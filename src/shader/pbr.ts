@@ -31,6 +31,7 @@ export const fragment = /* glsl */ `#version 300 es
 	in vec2 v_uv;
 
 	uniform mat4 projMatrix;
+	uniform mat4 viewMatrix;
 	uniform vec4 viewport;
 
 	uniform DirLight dirLight;
@@ -44,6 +45,21 @@ export const fragment = /* glsl */ `#version 300 es
 	uniform sampler2D g_depth;
 
 	out vec4 fragColor;
+
+	vec3 UnpackNormal(sampler2D normalMap, vec2 uv, vec3 surfPosInEye, vec3 surfNormal) {
+		vec3 normalInLocalSpace = texture(normalMap, uv).xyz * 2.0 - 1.0;
+		vec3 dPosX = dFdx(surfPosInEye);
+		vec3 dPosY = dFdy(surfPosInEye);
+		vec2 dUvX = dFdx(uv);
+		vec2 dUvY = dFdy(uv);
+
+		vec3 S = normalize( dPosX * dUvY.y - dPosY * dUvX.y );
+		vec3 T = normalize( -dPosX * dUvY.x + dPosY* dUvX.x );
+		vec3 N = normalize( surfNormal );
+    
+		mat3 tsn = mat3( S, T, N );
+		return normalize( tsn * normalInLocalSpace );
+	}
 
 	float ToLinearDepth(float depth) {
 		float ndc = depth * 2.0 - 1.0; 
@@ -65,14 +81,16 @@ export const fragment = /* glsl */ `#version 300 es
 		vec3 pos = texture(g_pos, uv).xyz;
 
 		
-		float dtLN = dot(normal, normalize(dirLight.direction));
+
+		vec4 normalColor = texture(normalMap, v_uv);
+		vec4 posInEye = viewMatrix * vec4(pos, 1.0);
+		vec3 mapNormal = UnpackNormal(normalMap, v_uv, posInEye.xyz, normal);
+
+		float dtLN = dot(mapNormal, normalize(dirLight.direction));
 
 		vec4 dirLightColor = vec4(dtLN * dirLight.color * dirLight.intensity, 1.0);
 		diffuse += dirLightColor;
 
 		fragColor = diffuse;
-
-		vec4 normalColor = texture(normalMap, v_uv);
-		fragColor = normalColor;
 	}
 `;
