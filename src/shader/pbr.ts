@@ -2,17 +2,19 @@ export const vertex = /* glsl */ `#version 300 es
 	precision highp float;
 	#pragma vscode_glsllint_stage : vert //pragma to set STAGE to 'vert'
 
-	in vec3 position;
-	in vec2 uv;
+	layout(location = 0) in vec3 position;
+	// in vec3 normal; // NOTE: if we dont need normal attrib, we must set location specificly to 2
+	layout(location = 2) in vec2 uv;
 
 	uniform mat4 projMatrix;
 	uniform mat4 mvMatrix;
+	uniform mat4 modelMatrix;
 
 	out vec2 v_uv;
 
 	void main() {
-		gl_Position = projMatrix * mvMatrix * vec4(position, 1.0);
 		v_uv = uv;
+		gl_Position = projMatrix * mvMatrix * vec4(position, 1.0);
 	}
 `;
 
@@ -20,18 +22,17 @@ export const fragment = /* glsl */ `#version 300 es
 	precision highp float;
 	#pragma vscode_glsllint_stage : frag //pragma to set STAGE to 'frag'
 
+	in vec2 v_uv;
+
 	struct DirLight {
 		vec3 direction;
 		vec3 color;
 		float intensity;
 	};
 
-
-	in vec3 v_normal;
-	in vec2 v_uv;
-
 	uniform mat4 projMatrix;
 	uniform mat4 viewMatrix;
+	uniform mat4 mvMatrix;
 	uniform vec4 viewport;
 
 	uniform DirLight dirLight;
@@ -47,18 +48,19 @@ export const fragment = /* glsl */ `#version 300 es
 	out vec4 fragColor;
 
 	vec3 UnpackNormal(sampler2D normalMap, vec2 uv, vec3 surfPosInEye, vec3 surfNormal) {
-		vec3 normalInLocalSpace = texture(normalMap, uv).xyz * 2.0 - 1.0;
+		vec3 nColor = texture(normalMap, uv).xyz;
+		vec3 nValue = nColor * 2.0 - 1.0;
 		vec3 dPosX = dFdx(surfPosInEye);
 		vec3 dPosY = dFdy(surfPosInEye);
 		vec2 dUvX = dFdx(uv);
 		vec2 dUvY = dFdy(uv);
 
-		vec3 S = normalize( dPosX * dUvY.y - dPosY * dUvX.y );
-		vec3 T = normalize( -dPosX * dUvY.x + dPosY* dUvX.x );
+		vec3 S = normalize( dPosX * dUvY.y + dPosY * dUvX.y );
+		vec3 T = normalize( dPosX * dUvY.x + dPosY * dUvX.x );
 		vec3 N = normalize( surfNormal );
     
 		mat3 tsn = mat3( S, T, N );
-		return normalize( tsn * normalInLocalSpace );
+		return normalize( tsn * nValue );
 	}
 
 	float ToLinearDepth(float depth) {
@@ -71,25 +73,32 @@ export const fragment = /* glsl */ `#version 300 es
 	}
 
 	void main() {
-		vec2 uv = (gl_FragCoord.xy - viewport.xy)/viewport.zw;
+		highp vec2 uv = (gl_FragCoord.xy - viewport.xy)/viewport.zw;
+		// uv.y = 1.0 - uv.y;
 
 		float depth = texture(g_depth, uv).r;
 		depth = ToLinearDepth(depth);
 
 		vec4 diffuse = texture(g_diffuse, uv);
-		vec3 normal = texture(g_normal, uv).xyz;
-		vec3 pos = texture(g_pos, uv).xyz;
+		vec3 normal = texture(g_normal, uv).xyz * 2.0 - 1.0;
+		vec3 pos = texture(g_pos, uv).xyz * 2.0 - 1.0;
 
-		
-
-		vec4 normalColor = texture(normalMap, v_uv);
 		vec4 posInEye = viewMatrix * vec4(pos, 1.0);
-		vec3 mapNormal = UnpackNormal(normalMap, v_uv, posInEye.xyz, normal);
 
-		float dtLN = dot(mapNormal, normalize(dirLight.direction));
+		vec4 nCol = texture(normalMap, v_uv);
+
+		// NOTE: here we use v_uv to sample from normal texture
+		vec3 mapNormal = UnpackNormal(normalMap, v_uv, -posInEye.xyz, normal);
+
+		// mat3 tbn = getTangentFrame(-posInEye.xyz, normal, v_uv);
+		// mapNormal = normalize(tbn * nCol.xyz);
+
+		float dtLN = max(dot(mapNormal, normalize(dirLight.direction)), 0.0);
 
 		vec4 dirLightColor = vec4(dtLN * dirLight.color * dirLight.intensity, 1.0);
-		diffuse += dirLightColor;
+
+		vec4 ambient = vec4(1.0,1.0,1.0,1.0);
+		diffuse *= (dirLightColor + ambient*0.1);
 
 		fragColor = diffuse;
 	}

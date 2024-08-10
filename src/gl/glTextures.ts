@@ -2,14 +2,6 @@ import { Texture } from "../core/texture";
 import { GL_ConstantsMapping } from "./glConstantsMapping";
 import { GL_State } from "./glState";
 
-function getInternalFormat(gl: WebGL2RenderingContext, texture: Texture) {
-    // webgl2 must use DEPTH_COMPONENT<Num>
-    if (texture.isDepthTexture) {
-        return gl.DEPTH_COMPONENT16;
-    }
-    return texture.param.format;
-}
-
 export class GL_Textures {
     unit = 0;
     textures = new Map();
@@ -53,7 +45,9 @@ export class GL_Textures {
             if (texture.image != null) {
                 const { width, height } = texture.image;
                 const { wrapS, wrapT, magFilter, minFilter, format, type } = this.getGLTextureParams(texture.param);
-                gl.texImage2D(gl.TEXTURE_2D, 0, getInternalFormat(gl, texture), width, height, 0, format, type, null);
+                // temprorary code
+                const internalFormat = texture.isDepthTexture ? gl.DEPTH_COMPONENT16 : format;
+                gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, null);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrapS);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrapT);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minFilter);
@@ -68,7 +62,7 @@ export class GL_Textures {
 
     uploadTexture(texture: Texture, unit: number) {
         const gl = this.gl;
-        const { format, type } = texture.param;
+        const { format, type } = this.getGLTextureParams(texture.param);
 
         this.initTexture(texture);
 
@@ -76,12 +70,14 @@ export class GL_Textures {
         this.state.bindTexture(unit, texLocation);
 
         if (!texture.isRenderTargetTexture && texture.image instanceof Image) {
-            gl.texImage2D(gl.TEXTURE_2D, 0, getInternalFormat(gl, texture), format, type, texture.image);
+            // temprorary code
+            const internalFormat = texture.isDepthTexture ? gl.DEPTH_COMPONENT16 : format;
+            gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, format, type, texture.image);
         }
     }
 
     private getGLTextureParams<T extends object>(params: T) {
-        const glPrams: T = params;
+        const glPrams: T = { ...params };
         for (const key of Object.keys(params)) {
             const value = params[key];
             const glValue = this.constantsMapping.getGLConstant(value);

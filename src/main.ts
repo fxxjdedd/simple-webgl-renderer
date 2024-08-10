@@ -17,7 +17,7 @@ const gl = renderer.gl;
 /*                                 Geometries                                 */
 /* -------------------------------------------------------------------------- */
 
-const box = new BoxGeometry();
+const box = new BoxGeometry(1, 1, 1);
 
 /* -------------------------------------------------------------------------- */
 /*                                   Cameras                                  */
@@ -25,7 +25,7 @@ const box = new BoxGeometry();
 
 const camera = new PerspectiveCamera(60, canvas.width / canvas.height, 0.1, 10);
 camera.position.x = 1;
-camera.position.y = 1;
+camera.position.y = -1;
 camera.position.z = 2;
 camera.lookAt(0, 0, 0);
 
@@ -74,7 +74,7 @@ pbrMaterial.normalMap = normalMap;
 const dirLight = new DirectionalLight();
 dirLight.position = new Vec3(5, 5, 5);
 dirLight.target = boxMesh2;
-dirLight.color = new Vec3(1, 0, 0);
+dirLight.color = new Vec3(1, 1, 1);
 
 /* -------------------------------------------------------------------------- */
 /*                           DeferredDebugMaterials                           */

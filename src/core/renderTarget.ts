@@ -25,9 +25,9 @@ export class WebGLRenderTarget {
         }
     }
 
-    setupRenderTarget(gl: WebGL2RenderingContext, textures: GL_Textures) {
+    setupRenderTarget(gl: WebGL2RenderingContext, glTextures: GL_Textures) {
         if (!this.framebuffer) {
-            this.framebuffer = new GL_FrameBuffer(gl, textures.state, textures);
+            this.framebuffer = new GL_FrameBuffer(gl, glTextures.state, glTextures);
         }
 
         this.textures.map((tex) => {

@@ -40,7 +40,8 @@ export const fragment = /* glsl */ `#version 300 es
 	void main() {
 
 		g_diffuse = vec4(0.0, 0.5, 0.0, 1.0);
-		g_normal = vec4(v_normal, 1.0);
-		g_pos = vec4(v_pos, 1.0);
+		// texture color is range from 0 to 1, so we must have a conversion
+		g_normal = vec4((v_normal + 1.0) / 2.0, 1.0);
+		g_pos = vec4((v_pos + 1.0) / 2.0, 1.0);
 	}
 `;

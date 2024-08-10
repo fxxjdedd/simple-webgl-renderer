@@ -19,7 +19,7 @@ export class Texture {
     isDepthTexture: boolean = false; // temporary
     isRenderTargetTexture: boolean = false;
     constructor(public image?: TextureImage, public param?: TextureParam) {
-        this.param ??= null;
+        this.image ??= null;
         this.param = {
             ...{
                 wrapS: ClampToEdgeWrapping,
