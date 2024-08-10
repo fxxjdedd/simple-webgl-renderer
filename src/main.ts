@@ -17,7 +17,7 @@ const gl = renderer.gl;
 /*                                 Geometries                                 */
 /* -------------------------------------------------------------------------- */
 
-const box = new BoxGeometry(1, 1, 1);
+const box = new BoxGeometry(2, 2, 2);
 
 /* -------------------------------------------------------------------------- */
 /*                                   Cameras                                  */
@@ -25,7 +25,7 @@ const box = new BoxGeometry(1, 1, 1);
 
 const camera = new PerspectiveCamera(60, canvas.width / canvas.height, 0.1, 10);
 camera.position.x = 1;
-camera.position.y = -1;
+camera.position.y = 1;
 camera.position.z = 2;
 camera.lookAt(0, 0, 0);
 
@@ -40,7 +40,12 @@ orbitControl.setupEventListeners();
 /*                              DeferredMaterials                             */
 /* -------------------------------------------------------------------------- */
 
+const diffuseMap = new TextureLoader().load("/textures/medieval_red_brick_1k/medieval_red_brick_diff_1k.jpg");
+const normalMap = new TextureLoader().load("/textures/medieval_red_brick_1k/medieval_red_brick_nor_gl_1k.png");
 const deferredMaterial = new DeferredMaterial();
+deferredMaterial.map = diffuseMap;
+deferredMaterial.normalMap = normalMap;
+
 const boxMesh1 = new Mesh(box, deferredMaterial);
 
 const depthTexture = new DepthTexture(gl);
@@ -59,8 +64,6 @@ const renderTarget = new WebGLRenderTarget(
 /*                                PBRMaterials                                */
 /* -------------------------------------------------------------------------- */
 
-const normalMap = new TextureLoader().load("/textures/medieval_red_brick_1k/medieval_red_brick_nor_gl_1k.png");
-
 const pbrMaterial = new PBRMaterial();
 const boxMesh2 = new Mesh(box, pbrMaterial);
 pbrMaterial.uniforms = {
@@ -69,7 +72,6 @@ pbrMaterial.uniforms = {
     g_pos: renderTarget.textures[2],
     g_depth: depthTexture,
 };
-pbrMaterial.normalMap = normalMap;
 
 const dirLight = new DirectionalLight();
 dirLight.position = new Vec3(5, 5, 5);
