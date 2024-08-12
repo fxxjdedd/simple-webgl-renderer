@@ -24,10 +24,27 @@ export const fragment = /* glsl */ `#version 300 es
 		float intensity;
 	};
 
+	struct BRDFOutLight {
+		vec3 diffuseColor;
+		vec3 specularColor;
+	};
+
+	BRDFOutLight BRDF(vec3 p, vec3 Wo, vec3 Wi) {
+		BRDFOutLight outLight;
+		outLight.diffuseColor = vec3(0.0);
+		outLight.specularColor = vec3(0.0);
+		return outLight;
+	}
+
+
 	uniform mat4 projMatrix;
+	uniform mat4 mvMatrix;
 	uniform vec4 viewport;
 
 	uniform DirLight dirLight;
+	// pbr parameters
+	uniform float metalness;
+	uniform float roughness;
 
 	uniform sampler2D g_pos;
 	uniform sampler2D g_diffuse;
@@ -35,6 +52,9 @@ export const fragment = /* glsl */ `#version 300 es
 	uniform sampler2D g_depth;
 
 	out vec4 fragColor;
+
+
+
 	float ToLinearDepth(float depth) {
 		float ndc = depth * 2.0 - 1.0; 
 		// https://stackoverflow.com/questions/56428880/how-to-extract-camera-parameters-from-projection-matrix
@@ -54,6 +74,10 @@ export const fragment = /* glsl */ `#version 300 es
 		vec3 normal = texture(g_normal, uv).xyz * 2.0 - 1.0;
 		vec3 pos = texture(g_pos, uv).xyz * 2.0 - 1.0;
 
+		vec3 L = dirLight.direction;
+		vec3 N = normal;
+		vec3 V = inverse(mvMatrix)[3].xyz - pos;
+		vec3 H = normalize(L + V);
 
 		float dtLN = max(dot(normal, normalize(dirLight.direction)), 0.0);
 

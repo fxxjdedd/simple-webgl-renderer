@@ -39,6 +39,7 @@ export const fragment = /* glsl */ `#version 300 es
 
 	uniform sampler2D map;
 	uniform sampler2D normalMap;
+	uniform vec4 diffuse;
 
 	uniform mat4 viewMatrix;
 
@@ -66,7 +67,7 @@ export const fragment = /* glsl */ `#version 300 es
 		// NOTE: here we use v_uv to sample from normal texture
 		vec3 mapNormal = UnpackNormal(normalMap, v_uv, -posInEye.xyz, v_normal);
 
-		g_diffuse = texture(map, v_uv);
+		g_diffuse = texture(map, v_uv) * diffuse;
 		// texture color is range from 0 to 1, so we must have a conversion
 		g_normal = vec4((mapNormal + 1.0) / 2.0, 1.0);
 		g_pos = vec4((v_pos + 1.0) / 2.0, 1.0);
