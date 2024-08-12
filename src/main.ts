@@ -4,7 +4,7 @@ import { BoxGeometry } from "./geometry/BoxGeometry";
 import { WebGLRenderer } from "./core/renderer";
 import { WebGLRenderTarget } from "./core/renderTarget";
 import { DepthTexture } from "./textures/depthTexture";
-import { Vec3 } from "gl-matrix";
+import { Vec3, Vec4 } from "gl-matrix";
 import { DirectionalLight } from "./core/light";
 import { DeferredDebugMaterial, DeferredMaterial, PBRMaterial } from "./materials";
 import { TextureLoader } from "./loader/TextureLoader";
@@ -45,6 +45,7 @@ const normalMap = new TextureLoader().load("/textures/medieval_red_brick_1k/medi
 const deferredMaterial = new DeferredMaterial();
 deferredMaterial.map = diffuseMap;
 deferredMaterial.normalMap = normalMap;
+deferredMaterial.uniforms.diffuse = new Vec4(1, 1, 1, 1.0);
 
 const boxMesh1 = new Mesh(box, deferredMaterial);
 
