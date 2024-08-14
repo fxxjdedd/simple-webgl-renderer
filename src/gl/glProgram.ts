@@ -12,12 +12,13 @@ export class GL_Program {
     attributes: Record<string, { type: number; location: number; locationSize: number }>;
     uniforms: GL_Uniforms;
 
-    constructor(private gl: WebGL2RenderingContext, private shader: Shader) {
+    constructor(private gl: WebGL2RenderingContext, shader: Shader, defines: Record<string, any> = {}) {
         const program = gl.createProgram();
         this.program = program;
 
         const vs = gl.createShader(gl.VERTEX_SHADER);
-        gl.shaderSource(vs, shader.vertex);
+        const vertShader = this.prefixVertShader(defines, shader.vertex);
+        gl.shaderSource(vs, vertShader);
         gl.compileShader(vs);
 
         if (!gl.getShaderParameter(vs, gl.COMPILE_STATUS)) {
@@ -25,7 +26,8 @@ export class GL_Program {
         }
 
         const fs = gl.createShader(gl.FRAGMENT_SHADER);
-        gl.shaderSource(fs, shader.fragment);
+        const fragShader = this.prefixVertShader(defines, shader.fragment);
+        gl.shaderSource(fs, fragShader);
         gl.compileShader(fs);
 
         if (!gl.getShaderParameter(fs, gl.COMPILE_STATUS)) {
@@ -91,6 +93,27 @@ export class GL_Program {
         } else {
             // console.warn(`No glUniform found for uniform:${name}.`);
         }
+    }
+
+    prefixVertShader(defines, vertShader) {
+        // prettier-ignore
+        const prefix = [
+            defines.USE_NORMAL_MAP ? "#define USE_NORMAL_MAP" : ""
+        ].join("\n");
+        const [_, content] = vertShader.split("#version 300 es\n");
+
+        return "#version 300 es\n" + prefix + "\n" + content;
+    }
+
+    prefixFragShader(defines, fragShader) {
+        // prettier-ignore
+        const prefix = [
+            defines.USE_NORMAL_MAP ? "#define USE_NORMAL_MAP" : ""
+        ].join("\n");
+
+        const [_, content] = fragShader.split("#version 300 es\n");
+
+        return "#version 300 es\n" + prefix + "\n" + content;
     }
 
     draw(start, count) {

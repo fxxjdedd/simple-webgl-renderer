@@ -11,10 +11,11 @@ import { DeferredDebugMaterial, DeferredMaterial, PBRMaterial } from "../materia
 import { GL_Textures } from "../gl/glTextures";
 import { Texture } from "./texture";
 import { GL_ConstantsMapping } from "../gl/glConstantsMapping";
+import { GL_ProgramManager } from "../gl/glProgramManager";
 
 export class WebGLRenderer {
     gl: WebGL2RenderingContext;
-    programs: Map<string, GL_Program>;
+    programManager: GL_ProgramManager;
     textures: GL_Textures;
     state: GL_State;
     renderState: GL_RenderState;
@@ -25,10 +26,7 @@ export class WebGLRenderer {
 
     constructor(public canvas: HTMLCanvasElement) {
         const gl = (this.gl = canvas.getContext("webgl2"));
-        this.programs = new Map();
-        this.programs.set(DeferredMaterial.name, new GL_Program(gl, deferredShader));
-        this.programs.set(PBRMaterial.name, new GL_Program(gl, pbrShader));
-        this.programs.set(DeferredDebugMaterial.name, new GL_Program(gl, deferredDebugShader));
+        this.programManager = new GL_ProgramManager(gl);
         this.state = new GL_State(gl);
         this.constantsMapping = new GL_ConstantsMapping(gl);
         this.textures = new GL_Textures(gl, this.constantsMapping, this.state);
@@ -75,7 +73,15 @@ export class WebGLRenderer {
         Mat4.multiply(mesh.mvMatrix, camera.matrixWorldInv, mesh.matrixWorld);
         Mat3.fromMat4(mesh.normalMatrix, Mat4.clone(mesh.mvMatrix).invert().transpose());
 
-        const program = this.programs.get(mesh.material.name);
+        const defines = {};
+        for (const name in mesh.material.uniforms) {
+            const value = mesh.material.uniforms[name];
+            if (name === "normalMap" && value instanceof Texture) {
+                defines["USE_NORMAL_MAP"] = 1;
+            }
+        }
+
+        const program = this.programManager.getProgram(mesh.material.name, defines);
         if (!program) {
             throw new Error("No properly program found for material: " + mesh.material.name);
         }

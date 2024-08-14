@@ -59,17 +59,18 @@ export const fragment = /* glsl */ `#version 300 es
 		return normalize( tsn * nValue );
 	}
 
-
-
 	void main() {
 
 		vec4 posInEye = viewMatrix * vec4(v_pos, 1.0);
 		// NOTE: here we use v_uv to sample from normal texture
+#ifdef USE_NORMAL_MAP
 		vec3 mapNormal = UnpackNormal(normalMap, v_uv, -posInEye.xyz, v_normal);
-
-		g_diffuse = texture(map, v_uv) * diffuse;
 		// texture color is range from 0 to 1, so we must have a conversion
 		g_normal = vec4((mapNormal + 1.0) / 2.0, 1.0);
+#else
+		g_normal = vec4((v_normal + 1.0) / 2.0, 1.0);
+#endif
+		g_diffuse = texture(map, v_uv) * diffuse;
 		g_pos = vec4((v_pos + 1.0) / 2.0, 1.0);
 	}
 `;

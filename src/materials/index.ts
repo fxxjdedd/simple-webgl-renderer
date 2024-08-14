@@ -1,4 +1,4 @@
-import { Vec3 } from "gl-matrix";
+import { Vec3, Vec4 } from "gl-matrix";
 import { Material } from "../core/core";
 
 export class DeferredMaterial extends Material {
@@ -22,7 +22,7 @@ export class PBRMaterial extends Material {
     // static name = "PBRMaterial";
     metalness: number = 0;
     roughness: number = 1;
-    color = new Vec3(1, 1, 1);
+    color = new Vec4(1, 1, 1, 1);
     constructor() {
         super("PBRMaterial");
     }
