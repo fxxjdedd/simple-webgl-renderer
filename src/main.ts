@@ -72,6 +72,8 @@ pbrMaterial.uniforms = {
     g_normal: renderTarget.textures[1],
     g_pos: renderTarget.textures[2],
     g_depth: depthTexture,
+    metalness: 0.0,
+    roughness: 1.0,
 };
 
 const dirLight = new DirectionalLight();
