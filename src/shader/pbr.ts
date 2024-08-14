@@ -157,7 +157,7 @@ export const fragment = /* glsl */ `#version 300 es
 		vec3 Wi = dirLight.direction;
 		vec3 Wo = inverse(mvMatrix)[3].xyz - pos;
 		float dtLN = clamp(dot(normal, normalize(dirLight.direction)), 0.0, 1.0);
-		vec3 Li = dtLN * dirLight.color; // irradiance
+		vec3 Li = dtLN * dirLight.color; // radiance
 
 		// direct lighting
 		outLight.diffuseColor += Li * BRDF_DiffusePart(pbrMaterial.diffuseColor);
@@ -165,7 +165,6 @@ export const fragment = /* glsl */ `#version 300 es
 
 		// indirect lighting
 		vec3 ambient = vec3(1.0,1.0,1.0);
-		//  * RECIPROCAL_PI * pbrMaterial.diffuseColor;
 		vec3 irradiance = ambient;
 
 		outLight.indirectDiffuse = irradiance * BRDF_DiffusePart(pbrMaterial.diffuseColor);
