@@ -2,6 +2,7 @@ import { Vec3, Mat3, Mat4, Quat } from "gl-matrix";
 import { BufferLayout, StructuredData, TypedArrayCode } from "../util";
 import { DEG2RAD } from "../math/math";
 import { Texture } from "./texture";
+import { calcBBox } from "../util/boundary";
 
 class Material {
     private _map: Texture;
@@ -30,7 +31,10 @@ class Material {
 class Geometry<T extends BufferLayout = BufferLayout> {
     index: number[];
     attributes: Record<keyof T, number[]>;
+    bbox: [Vec3, Vec3] | null = null;
+    isDirty = true;
     constructor(public layout: T) {
+        this.index = [];
         this.attributes = {} as any;
     }
     setIndex(indices: number[]) {
@@ -94,8 +98,21 @@ class Object3D {
 }
 
 class Mesh extends Object3D {
+    centerAligned = true;
     constructor(public geometry: Geometry, public material: Material) {
         super();
+    }
+
+    alignToBBoxCenter(bbox?: [Vec3, Vec3]) {
+        bbox = bbox || this.geometry.bbox;
+        if (bbox != null) {
+            const center = [
+                bbox[0][0] + (bbox[1][0] - bbox[0][0]) / 2,
+                bbox[0][1] + (bbox[1][1] - bbox[0][1]) / 2,
+                bbox[0][2] + (bbox[1][2] - bbox[0][2]) / 2,
+            ];
+            this.position = new Vec3(-center[0], -center[1], -center[2]);
+        }
     }
 }
 

@@ -22,17 +22,19 @@ export class GL_BindingStates {
 export class GL_BindingState {
     vertexAttributeBuffer: GL_VertexAttributeBuffer;
     indexBuffer: GL_IndexBuffer;
-    constructor(private gl: WebGL2RenderingContext, program: GL_Program, geometry: Geometry) {
-        this.vertexAttributeBuffer = new GL_VertexAttributeBuffer(
-            gl,
-            geometry.attributes,
-            geometry.layout
-        );
-        this.vertexAttributeBuffer.setupVAO(program);
-        this.indexBuffer = new GL_IndexBuffer(gl, geometry.index);
+    constructor(private gl: WebGL2RenderingContext, private program: GL_Program, private geometry: Geometry) {
+        this.geometry = geometry;
+        this.vertexAttributeBuffer = new GL_VertexAttributeBuffer(gl, geometry.layout);
+        this.vertexAttributeBuffer.setupVAO(this.program);
+        this.indexBuffer = new GL_IndexBuffer(gl);
     }
 
     bind() {
+        if (this.geometry.isDirty) {
+            this.vertexAttributeBuffer.updateBufferData(this.geometry.attributes);
+            this.indexBuffer.updateBufferData(this.geometry.index);
+            this.geometry.isDirty = false;
+        }
         this.vertexAttributeBuffer.bindVAO();
         this.indexBuffer.bindBuffer();
     }

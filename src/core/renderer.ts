@@ -12,6 +12,7 @@ import { GL_Textures } from "../gl/glTextures";
 import { Texture } from "./texture";
 import { GL_ConstantsMapping } from "../gl/glConstantsMapping";
 import { GL_ProgramManager } from "../gl/glProgramManager";
+import { calcBBox } from "../util/boundary";
 
 export class WebGLRenderer {
     gl: WebGL2RenderingContext;
@@ -69,6 +70,10 @@ export class WebGLRenderer {
     }
 
     renderMesh(mesh: Mesh, camera: Camera) {
+        if (mesh.centerAligned) {
+            mesh.alignToBBoxCenter();
+        }
+
         mesh.updateMatrixWorld();
         Mat4.multiply(mesh.mvMatrix, camera.matrixWorldInv, mesh.matrixWorld);
         Mat3.fromMat4(mesh.normalMatrix, Mat4.clone(mesh.mvMatrix).invert().transpose());

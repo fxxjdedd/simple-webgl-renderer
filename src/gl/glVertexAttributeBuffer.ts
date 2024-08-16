@@ -28,17 +28,17 @@ export class GL_VertexAttributeBuffer {
     glBuffer: WebGLBuffer;
     glVAO: WebGLVertexArrayObject;
     structuredData: StructuredData<BufferLayout>;
-    constructor(
-        public gl: WebGL2RenderingContext,
-        public attributes: Record<string, number[]>,
-        public layout: BufferLayout
-    ) {
+    constructor(public gl: WebGL2RenderingContext, public layout: BufferLayout) {
         this.structuredData = new StructuredData(layout);
-        this.structuredData.merge(this.attributes);
         this.glBuffer = gl.createBuffer();
+        this.glVAO = gl.createVertexArray();
+    }
+
+    updateBufferData(attributes: Record<string, number[]>) {
+        const gl = this.gl;
+        this.structuredData.merge(attributes);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.glBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, this.structuredData.buffer, gl.STATIC_DRAW);
-        this.glVAO = gl.createVertexArray();
     }
 
     bindBuffer() {
@@ -52,14 +52,7 @@ export class GL_VertexAttributeBuffer {
             const { type, components, offset, stride } = this.structuredData.accessors[attrName];
             const attribLocation = program.attributes[attrName].location;
             this.gl.enableVertexAttribArray(attribLocation);
-            this.gl.vertexAttribPointer(
-                attribLocation,
-                components,
-                getGLType(this.gl, type),
-                false,
-                stride,
-                offset
-            );
+            this.gl.vertexAttribPointer(attribLocation, components, getGLType(this.gl, type), false, stride, offset);
         }
     }
 

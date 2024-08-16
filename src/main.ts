@@ -1,5 +1,5 @@
 import { OrbitControl } from "./control/OrbitControl";
-import { Mesh, PerspectiveCamera, Scene } from "./core/core";
+import { Geometry, Mesh, PerspectiveCamera, Scene } from "./core/core";
 import { BoxGeometry } from "./geometry/BoxGeometry";
 import { WebGLRenderer } from "./core/renderer";
 import { WebGLRenderTarget } from "./core/renderTarget";
@@ -8,6 +8,10 @@ import { Vec3, Vec4 } from "gl-matrix";
 import { DirectionalLight } from "./core/light";
 import { DeferredDebugMaterial, DeferredMaterial, PBRMaterial } from "./materials";
 import { TextureLoader } from "./loader/TextureLoader";
+import { OBJLoader } from "./loader/OBJLoader";
+
+const cube = new OBJLoader().load("/3d-models/cube.obj");
+const bunny = new OBJLoader().load("/3d-models/stanford-bunny.obj");
 
 const canvas = document.getElementById("webglcanvas") as HTMLCanvasElement;
 const renderer = new WebGLRenderer(canvas);
@@ -17,7 +21,9 @@ const gl = renderer.gl;
 /*                                 Geometries                                 */
 /* -------------------------------------------------------------------------- */
 
-const box = new BoxGeometry(2, 2, 2);
+let box = new BoxGeometry(2, 2, 2);
+
+box = bunny;
 
 /* -------------------------------------------------------------------------- */
 /*                                   Cameras                                  */
@@ -44,7 +50,7 @@ const diffuseMap = new TextureLoader().load("/textures/medieval_red_brick_1k/med
 const normalMap = new TextureLoader().load("/textures/medieval_red_brick_1k/medieval_red_brick_nor_gl_1k.png");
 const deferredMaterial = new DeferredMaterial();
 deferredMaterial.map = diffuseMap;
-deferredMaterial.normalMap = normalMap;
+// deferredMaterial.normalMap = normalMap;
 deferredMaterial.uniforms.diffuse = new Vec4(1, 1, 1, 1.0);
 
 const boxMesh1 = new Mesh(box, deferredMaterial);
@@ -99,6 +105,12 @@ const deferredDebugMaterial3 = new DeferredDebugMaterial();
 const boxMesh4depthviewer3 = new Mesh(box, deferredDebugMaterial3);
 boxMesh4depthviewer3.position = new Vec3(2, 0, 0);
 deferredDebugMaterial3.map = depthTexture;
+
+boxMesh1.scale.set([10, 10, 10]);
+boxMesh2.scale.set([10, 10, 10]);
+boxMesh4depthviewer1.scale.set([10, 10, 10]);
+boxMesh4depthviewer2.scale.set([10, 10, 10]);
+boxMesh4depthviewer3.scale.set([10, 10, 10]);
 
 /* -------------------------------------------------------------------------- */
 /*                                   Scenes                                   */
