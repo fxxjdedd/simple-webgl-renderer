@@ -10,8 +10,10 @@ import { DeferredDebugMaterial, DeferredMaterial, PBRMaterial } from "./material
 import { TextureLoader } from "./loader/TextureLoader";
 import { OBJLoader } from "./loader/OBJLoader";
 
-const cube = new OBJLoader().load("/3d-models/cube.obj");
-const bunny = new OBJLoader().load("/3d-models/stanford-bunny.obj");
+const objLoader1 = new OBJLoader();
+const objLoader2 = new OBJLoader();
+const cube = objLoader1.load("/3d-models/cube.obj");
+const bunny = objLoader2.load("/3d-models/stanford-bunny.obj");
 
 const canvas = document.getElementById("webglcanvas") as HTMLCanvasElement;
 const renderer = new WebGLRenderer(canvas);
@@ -25,6 +27,7 @@ let box = new BoxGeometry(2, 2, 2);
 
 box = bunny;
 
+console.log(box);
 /* -------------------------------------------------------------------------- */
 /*                                   Cameras                                  */
 /* -------------------------------------------------------------------------- */
@@ -106,12 +109,6 @@ const boxMesh4depthviewer3 = new Mesh(box, deferredDebugMaterial3);
 boxMesh4depthviewer3.position = new Vec3(2, 0, 0);
 deferredDebugMaterial3.map = depthTexture;
 
-boxMesh1.scale.set([10, 10, 10]);
-boxMesh2.scale.set([10, 10, 10]);
-boxMesh4depthviewer1.scale.set([10, 10, 10]);
-boxMesh4depthviewer2.scale.set([10, 10, 10]);
-boxMesh4depthviewer3.scale.set([10, 10, 10]);
-
 /* -------------------------------------------------------------------------- */
 /*                                   Scenes                                   */
 /* -------------------------------------------------------------------------- */
@@ -122,6 +119,20 @@ const viewportScene = new Scene();
 viewportScene.objects = [boxMesh4depthviewer1, boxMesh4depthviewer2, boxMesh4depthviewer3];
 const renderScene = new Scene();
 renderScene.objects = [boxMesh2, dirLight];
+
+objLoader2.onLoad((obj) => {
+    boxMesh1.scale.set([10, 10, 10]);
+    boxMesh2.scale.set([10, 10, 10]);
+    boxMesh4depthviewer1.scale.set([10, 10, 10]);
+    boxMesh4depthviewer2.scale.set([10, 10, 10]);
+    boxMesh4depthviewer3.scale.set([10, 10, 10]);
+
+    boxMesh1.alignToBBoxCenter(obj.bbox);
+    boxMesh2.alignToBBoxCenter(obj.bbox);
+    boxMesh4depthviewer1.alignToBBoxCenter(obj.bbox);
+    boxMesh4depthviewer2.alignToBBoxCenter(obj.bbox);
+    boxMesh4depthviewer3.alignToBBoxCenter(obj.bbox);
+});
 
 /* -------------------------------------------------------------------------- */
 /*                                  run loop                                  */

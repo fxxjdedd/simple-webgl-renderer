@@ -7,7 +7,7 @@ export function calcBBox(positions: number[]): [Vec3, Vec3] {
         const pos = [positions[i], positions[i + 1], positions[i + 2]];
         bboxMin[0] = Math.min(bboxMin[0], pos[0]);
         bboxMin[1] = Math.min(bboxMin[1], pos[1]);
-        bboxMin[1] = Math.min(bboxMin[2], pos[2]);
+        bboxMin[2] = Math.min(bboxMin[2], pos[2]);
         bboxMax[0] = Math.max(bboxMax[0], pos[0]);
         bboxMax[1] = Math.max(bboxMax[1], pos[1]);
         bboxMax[2] = Math.max(bboxMax[2], pos[2]);

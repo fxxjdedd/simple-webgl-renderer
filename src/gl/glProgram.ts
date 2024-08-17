@@ -1,3 +1,4 @@
+import { GL_IndexBuffer } from "./glIndexBuffer";
 import { GL_State } from "./glState";
 import { GL_Textures } from "./glTextures";
 import { GL_Uniforms } from "./glUniforms";
@@ -116,8 +117,13 @@ export class GL_Program {
         return "#version 300 es\n" + prefix + "\n" + content;
     }
 
-    draw(start, count) {
+    drawElements(start: number, count: number) {
         const gl = this.gl;
         gl.drawElements(gl.TRIANGLES, count, gl.UNSIGNED_SHORT, start * Uint16Array.BYTES_PER_ELEMENT);
+    }
+
+    drawArray(start: number, count: number) {
+        const gl = this.gl;
+        gl.drawArrays(gl.TRIANGLES, start, count);
     }
 }

@@ -70,12 +70,10 @@ export class WebGLRenderer {
     }
 
     renderMesh(mesh: Mesh, camera: Camera) {
-        if (mesh.centerAligned) {
-            mesh.alignToBBoxCenter();
-        }
-
         mesh.updateMatrixWorld();
+
         Mat4.multiply(mesh.mvMatrix, camera.matrixWorldInv, mesh.matrixWorld);
+
         Mat3.fromMat4(mesh.normalMatrix, Mat4.clone(mesh.mvMatrix).invert().transpose());
 
         const defines = {};
@@ -121,9 +119,21 @@ export class WebGLRenderer {
         if (!(bindingState = this.bindingStates.getBindingState(program, mesh.geometry))) {
             bindingState = this.bindingStates.setBindingState(program, mesh.geometry);
         }
+
         bindingState.bind();
 
-        program.draw(0, bindingState.indexBuffer.structuredData.getTrangleCount());
+        this.renderBufferDirect(program, bindingState);
+    }
+
+    renderBufferDirect(program: GL_Program, bindingState: GL_BindingState) {
+        if (bindingState.indexBuffer) {
+            program.drawArray(0, bindingState.indexBuffer.structuredData.getTriangleCount());
+        } else {
+            const vertexStructuredData = bindingState.vertexAttributeBuffer.structuredData;
+            const positionAccessor = vertexStructuredData.accessors.position;
+            const positionCount = vertexStructuredData.getCountOf(positionAccessor);
+            program.drawArray(0, positionCount);
+        }
     }
 
     setRenderTarget(renderTarget: WebGLRenderTarget) {
