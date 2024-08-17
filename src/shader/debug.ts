@@ -17,6 +17,7 @@ export const fragment = /* glsl */ `#version 300 es
 	uniform mat4 mvMatrix;
 
 	uniform vec4 viewport;
+	uniform float adaptiveAspectRatio;
 	uniform sampler2D map;
 	
 	out vec4 fragColor;
@@ -32,11 +33,21 @@ export const fragment = /* glsl */ `#version 300 es
 	}
 
 	void main() {
-		vec2 uv = (gl_FragCoord.xy - viewport.xy)/viewport.zw;
+		// vec2 uv = (gl_FragCoord.xy - viewport.xy)/viewport.zw;
+
+		vec2 center = viewport.xy + viewport.zw / 2.0;
+
+		// first normalize to -0.5 to 0.5
+		vec2 uv = (gl_FragCoord.xy - center) / min(viewport.z, viewport.w);
+		// then scale by adaptiveAspectRatio
+		uv.x *= adaptiveAspectRatio;
+		// finally normalize to 0 to 1
+		uv = uv + 0.5;
+
 #ifdef IS_DEPTH_MAP
 		float depth = texture(map, uv).r;
 		depth = ToLinearDepth(depth);
-		fragColor = vec4(vec3(depth), 1.0);
+		fragColor = vec4(vec3(1.0 - depth), 1.0);
 #else
 		fragColor = texture(map, uv);
 #endif

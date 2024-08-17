@@ -10,6 +10,7 @@ import { DebugMaterial, DeferredDebugMaterial, DeferredMaterial, PBRMaterial } f
 import { TextureLoader } from "./loader/TextureLoader";
 import { OBJLoader } from "./loader/OBJLoader";
 import { ScreenPlane } from "./geometry/ScreenPlane";
+import { getAdaptiveAspectRatio } from "./util/texture";
 const canvas = document.getElementById("webglcanvas") as HTMLCanvasElement;
 const renderer = new WebGLRenderer(canvas);
 const gl = renderer.gl;
@@ -35,9 +36,9 @@ const screenPlane = new ScreenPlane();
 /* -------------------------------------------------------------------------- */
 
 const camera = new PerspectiveCamera(60, canvas.width / canvas.height, 0.1, 10);
-camera.position.x = 1;
-camera.position.y = 1;
-camera.position.z = 2;
+camera.position.x = 0;
+camera.position.y = 0.5;
+camera.position.z = 1;
 camera.lookAt(0, 0, 0);
 
 /* -------------------------------------------------------------------------- */
@@ -103,10 +104,18 @@ const debug1 = new Mesh(screenPlane, debugMaterial1);
 const debug2 = new Mesh(screenPlane, debugMaterial2);
 const debug3 = new Mesh(screenPlane, debugMaterial3);
 const debug4 = new Mesh(screenPlane, debugMaterial4);
+
+const adaptiveAspectRatio = getAdaptiveAspectRatio(renderTarget.width, renderTarget.height);
+
 debugMaterial1.map = renderTarget.textures[0];
+
+debugMaterial1.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
 debugMaterial2.map = renderTarget.textures[1];
+debugMaterial2.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
 debugMaterial3.map = renderTarget.textures[2];
+debugMaterial3.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
 debugMaterial4.map = depthTexture;
+debugMaterial4.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
 
 /* -------------------------------------------------------------------------- */
 /*                                   Scenes                                   */
