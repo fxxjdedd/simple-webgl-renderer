@@ -29,12 +29,12 @@ class Material {
     constructor(public name: string) {}
 }
 class Geometry<T extends BufferLayout = BufferLayout> {
-    index: number[];
+    index: number[] | null;
     attributes: Record<keyof T, number[]>;
     bbox: [Vec3, Vec3] | null = null;
     isDirty = true;
     constructor(public layout: T) {
-        this.index = [];
+        this.index = null;
         this.attributes = {} as any;
     }
     setIndex(indices: number[]) {
@@ -106,12 +106,20 @@ class Mesh extends Object3D {
     alignToBBoxCenter(bbox?: [Vec3, Vec3]) {
         bbox = bbox || this.geometry.bbox;
         if (bbox != null) {
-            const center = [
+            const center = new Vec3(
                 bbox[0][0] + (bbox[1][0] - bbox[0][0]) / 2,
                 bbox[0][1] + (bbox[1][1] - bbox[0][1]) / 2,
-                bbox[0][2] + (bbox[1][2] - bbox[0][2]) / 2,
-            ];
-            this.position = new Vec3(-center[0], -center[1], -center[2]);
+                bbox[0][2] + (bbox[1][2] - bbox[0][2]) / 2
+            );
+
+            this.position = this.position.sub(center);
+
+            // const mv = new Mat4().translate(new Vec3(-center[0], -center[1], -center[2]));
+            // Mat4.multiply(this.matrixWorld, mv, this.matrixWorld);
+            // Mat4.invert(this.matrixWorldInv, this.matrixWorld);
+            // // this.matrix[4 * 3] -= center[0];
+            // // this.matrix[4 * 3 + 1] -= center[1];
+            // // this.matrix[4 * 3 + 1] -= center[2];
         }
     }
 }

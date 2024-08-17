@@ -190,9 +190,7 @@ export class StructuredData<TLayout extends BufferLayout> {
             }
             const count = m.length / l.components;
             if (layoutCount > 0 && count !== layoutCount) {
-                throw new Error(
-                    `Inconsistent number of vertex attributes: ${count}, previous one: ${layoutCount}`
-                );
+                throw new Error(`Inconsistent number of vertex attributes: ${count}, previous one: ${layoutCount}`);
             }
 
             layoutCount = count;
@@ -255,13 +253,7 @@ export class StructuredData<TLayout extends BufferLayout> {
         writeBuffer(this.buffer, typedArray, offset);
     }
 
-    protected _mergeTypedValue(
-        type: number,
-        value: number[],
-        offset: number,
-        components: number,
-        stride: number
-    ) {
+    protected _mergeTypedValue(type: number, value: number[], offset: number, components: number, stride: number) {
         const ctor = getArrayCtorOfCode(type);
         const typedArray = new ctor(value);
 
@@ -311,7 +303,7 @@ export class IndexStructuredData extends StructuredData<typeof IndexStructuredDa
         return this.accessors.index.type;
     }
 
-    getTrangleCount() {
+    getTriangleCount() {
         const { type, components } = this.accessors.index;
         const oneLayoutSize = this._getOneOfLayoutSize(type, components);
         return this.buffer.byteLength / oneLayoutSize;

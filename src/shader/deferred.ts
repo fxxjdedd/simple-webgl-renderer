@@ -19,6 +19,7 @@ export const vertex = /* glsl */ `#version 300 es
 		vec4 worldPos = modelMatrix * vec4(position, 1.0);
 		v_pos = worldPos.xyz;
 		// http://www.lighthouse3d.com/tutorials/glsl-12-tutorial/the-normal-matrix/
+		// v_normal = normal;
 		v_normal = normalMatrix * normal;
 		v_uv = uv;
 		gl_Position = projMatrix * mvMatrix * vec4(position, 1.0);

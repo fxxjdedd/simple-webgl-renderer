@@ -1,11 +1,12 @@
-import { Vec3 } from "gl-matrix";
+import { Vec3, Vec3Like } from "gl-matrix";
 import { Geometry } from "../core/core";
 import { StructuredData, TypedArrayCode } from "../util";
+import { Loader } from "./Loader";
 
 // 分隔符
 const separator = /\s{1,2}/g;
 
-export class OBJLoader {
+export class OBJLoader extends Loader<Geometry> {
     public load(url: string) {
         const bufferLayout = StructuredData.createLayout({
             position: {
@@ -31,16 +32,17 @@ export class OBJLoader {
         fetch(url).then(async (resp) => {
             const content = await resp.text();
             const {
-                geometry: { position, normal, uv, indices },
+                geometry: { position, normal, uv },
                 bbox,
             } = this.parseObjGeometry(content);
 
             geometry.setAttribute("position", position);
             geometry.setAttribute("normal", normal);
             geometry.setAttribute("uv", uv);
-            geometry.setIndex(indices);
             geometry.bbox = bbox;
             geometry.isDirty = true;
+
+            this.emit("loader:load", geometry);
         });
 
         return geometry;
@@ -54,10 +56,10 @@ export class OBJLoader {
         };
 
         const geometry = {
-            position: source.v,
+            position: [],
             normal: [],
             uv: [],
-            indices: [],
+            indices: null, // current we dont need indices
         };
 
         const bboxMin = [Infinity, Infinity, Infinity];
@@ -89,8 +91,8 @@ export class OBJLoader {
                         bboxMax[2] = Math.max(bboxMax[2], pos[2]);
 
                         source.v.push(...pos);
-                        geometry.normal.length += 3;
-                        geometry.uv.length += 2;
+                        // geometry.normal.length += 3;
+                        // geometry.uv.length += 2;
                         break;
                     case "vn":
                         source.vn.push(parseFloat(parts[1]), parseFloat(parts[2]), parseFloat(parts[3]));
@@ -109,50 +111,49 @@ export class OBJLoader {
                     const i1 = v1[0] - 1;
                     const i2 = v2[0] - 1;
                     const i3 = v3[0] - 1;
-                    geometry.indices.push(i1, i2, i3);
+
+                    const posA = source.v.slice(i1 * 3, i1 * 3 + 3);
+                    const posB = source.v.slice(i2 * 3, i2 * 3 + 3);
+                    const posC = source.v.slice(i3 * 3, i3 * 3 + 3);
+
+                    geometry.position.push(...posA);
+                    geometry.position.push(...posB);
+                    geometry.position.push(...posC);
+
+                    setArrayRange(geometry.position, i1 * 3, source.v, (v1[1] - 1) * 2, 2);
 
                     if (v1[1] && v2[1] && v3[1]) {
-                        setArrayRange(geometry.uv, i1 * 2, source.vt, v1[1] * 2, 2);
-                        setArrayRange(geometry.uv, i2 * 2, source.vt, v2[1] * 2, 2);
-                        setArrayRange(geometry.uv, i3 * 2, source.vt, v3[1] * 2, 2);
+                        const t1 = v1[1] - 1;
+                        const t2 = v2[1] - 1;
+                        const t3 = v3[1] - 1;
+
+                        geometry.uv.push(...source.vt.slice(t1 * 2, t1 * 2 + 2));
+                        geometry.uv.push(...source.vt.slice(t2 * 2, t2 * 2 + 2));
+                        geometry.uv.push(...source.vt.slice(t3 * 2, t3 * 2 + 2));
                     } else {
-                        setArrayRange(geometry.uv, i1 * 2, [0, 0], 0, 2);
-                        setArrayRange(geometry.uv, i2 * 2, [0, 0], 0, 2);
-                        setArrayRange(geometry.uv, i3 * 2, [0, 0], 0, 2);
+                        geometry.uv.push(0, 0);
+                        geometry.uv.push(0, 0);
+                        geometry.uv.push(0, 0);
                     }
 
                     if (v1[2] && v2[2] && v3[2]) {
-                        setArrayRange(geometry.normal, i1 * 3, source.vn, v1[2] * 3, 3);
-                        setArrayRange(geometry.normal, i2 * 3, source.vn, v2[2] * 3, 3);
-                        setArrayRange(geometry.normal, i3 * 3, source.vn, v3[2] * 3, 3);
+                        const n1 = v1[2] - 1;
+                        const n2 = v2[2] - 1;
+                        const n3 = v3[2] - 1;
+                        geometry.normal.push(...source.vn.slice(n1 * 3, n1 * 3 + 3));
+                        geometry.normal.push(...source.vn.slice(n2 * 3, n2 * 3 + 3));
+                        geometry.normal.push(...source.vn.slice(n3 * 3, n3 * 3 + 3));
                     } else {
-                        const a = new Vec3(
-                            geometry.position[i1 * 3],
-                            geometry.position[i1 * 3 + 1],
-                            geometry.position[i1 * 3 + 2]
-                        );
+                        const ab = [posB[0] - posA[0], posB[1] - posA[1], posB[2] - posA[2]] as Vec3Like;
+                        const ac = [posC[0] - posA[0], posC[1] - posA[1], posC[2] - posA[2]] as Vec3Like;
 
-                        const b = new Vec3(
-                            geometry.position[i2 * 3],
-                            geometry.position[i2 * 3 + 1],
-                            geometry.position[i2 * 3 + 2]
-                        );
+                        const crs = new Vec3(ab);
+                        Vec3.cross(crs, ab, ac);
+                        const normal = crs.normalize();
 
-                        const c = new Vec3(
-                            geometry.position[i3 * 3],
-                            geometry.position[i3 * 3 + 1],
-                            geometry.position[i3 * 3 + 2]
-                        );
-
-                        const ab = new Vec3().copy(b).sub(a);
-                        const ac = new Vec3().copy(c).sub(a);
-
-                        Vec3.cross(ac, ab, ac);
-                        const normal = ac.normalize();
-
-                        setArrayRange(geometry.normal, i1 * 3, normal, 0, 3);
-                        setArrayRange(geometry.normal, i2 * 3, normal, 0, 3);
-                        setArrayRange(geometry.normal, i3 * 3, normal, 0, 3);
+                        geometry.normal.push(...normal);
+                        geometry.normal.push(...normal);
+                        geometry.normal.push(...normal);
                     }
                 }
             }
