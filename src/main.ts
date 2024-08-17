@@ -9,6 +9,7 @@ import { DirectionalLight } from "./core/light";
 import { DeferredDebugMaterial, DeferredMaterial, PBRMaterial } from "./materials";
 import { TextureLoader } from "./loader/TextureLoader";
 import { OBJLoader } from "./loader/OBJLoader";
+import { ScreenPlane } from "./geometry/ScreenPlane";
 
 const objLoader1 = new OBJLoader();
 const objLoader2 = new OBJLoader();
@@ -56,7 +57,7 @@ deferredMaterial.map = diffuseMap;
 // deferredMaterial.normalMap = normalMap;
 deferredMaterial.uniforms.diffuse = new Vec4(1, 1, 1, 1.0);
 
-const boxMesh1 = new Mesh(box, deferredMaterial);
+const geometryPassMesh = new Mesh(box, deferredMaterial);
 
 const depthTexture = new DepthTexture(gl);
 
@@ -73,9 +74,10 @@ const renderTarget = new WebGLRenderTarget(
 /* -------------------------------------------------------------------------- */
 /*                                PBRMaterials                                */
 /* -------------------------------------------------------------------------- */
-
+const screenPlane = new ScreenPlane();
+console.log("🚀 ~ screenPlane :", screenPlane);
 const pbrMaterial = new PBRMaterial();
-const boxMesh2 = new Mesh(box, pbrMaterial);
+const lightingPassMesh = new Mesh(screenPlane, pbrMaterial);
 pbrMaterial.uniforms = {
     g_diffuse: renderTarget.textures[0],
     g_normal: renderTarget.textures[1],
@@ -87,7 +89,7 @@ pbrMaterial.uniforms = {
 
 const dirLight = new DirectionalLight();
 dirLight.position = new Vec3(5, 5, 5);
-dirLight.target = boxMesh2;
+dirLight.target = geometryPassMesh;
 dirLight.color = new Vec3(1, 1, 1);
 
 /* -------------------------------------------------------------------------- */
@@ -114,24 +116,15 @@ deferredDebugMaterial3.map = depthTexture;
 /* -------------------------------------------------------------------------- */
 
 const deferredScene = new Scene();
-deferredScene.objects = [boxMesh1];
+deferredScene.objects = [geometryPassMesh];
 const viewportScene = new Scene();
 viewportScene.objects = [boxMesh4depthviewer1, boxMesh4depthviewer2, boxMesh4depthviewer3];
 const renderScene = new Scene();
-renderScene.objects = [boxMesh2, dirLight];
+renderScene.objects = [lightingPassMesh, dirLight];
 
 objLoader2.onLoad((obj) => {
-    boxMesh1.scale.set([10, 10, 10]);
-    boxMesh2.scale.set([10, 10, 10]);
-    boxMesh4depthviewer1.scale.set([10, 10, 10]);
-    boxMesh4depthviewer2.scale.set([10, 10, 10]);
-    boxMesh4depthviewer3.scale.set([10, 10, 10]);
-
-    boxMesh1.alignToBBoxCenter(obj.bbox);
-    boxMesh2.alignToBBoxCenter(obj.bbox);
-    boxMesh4depthviewer1.alignToBBoxCenter(obj.bbox);
-    boxMesh4depthviewer2.alignToBBoxCenter(obj.bbox);
-    boxMesh4depthviewer3.alignToBBoxCenter(obj.bbox);
+    geometryPassMesh.scale.set([10, 10, 10]);
+    geometryPassMesh.alignToBBoxCenter(obj.bbox);
 });
 
 /* -------------------------------------------------------------------------- */
@@ -145,9 +138,9 @@ function animate() {
 
     renderer.render(renderScene, camera);
 
-    renderer.setViewport(0, 0, canvas.width / 3, canvas.height / 3);
-    renderer.setClearbits(0);
-    renderer.render(viewportScene, camera);
+    // renderer.setViewport(0, 0, canvas.width / 3, canvas.height / 3);
+    // renderer.setClearbits(0);
+    // renderer.render(viewportScene, camera);
 
     requestAnimationFrame(() => {
         animate();

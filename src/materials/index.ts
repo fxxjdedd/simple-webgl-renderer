@@ -16,6 +16,13 @@ export class DeferredDebugMaterial extends Material {
         super("DeferredDebugMaterial");
     }
 }
+export class DebugMaterial extends Material {
+    // TODO:
+    // static name = "DebugMaterial";
+    constructor() {
+        super("DebugMaterial");
+    }
+}
 
 export class PBRMaterial extends Material {
     // TODO:

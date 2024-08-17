@@ -1,5 +1,4 @@
 import { Vec3, Mat4, Quat, Vec4, Mat3 } from "gl-matrix";
-import { deferredShader, pbrShader, deferredDebugShader } from "../shader";
 import { GL_Program } from "../gl/glProgram";
 import { Camera, Material, Mesh, Scene } from "./core";
 import { GL_BindingState, GL_BindingStates } from "../gl/glBindingStates";
@@ -7,12 +6,10 @@ import { WebGLRenderTarget } from "./renderTarget";
 import { GL_State } from "../gl/glState";
 import { Light } from "./light";
 import { GL_RenderState } from "../gl/glRenderState";
-import { DeferredDebugMaterial, DeferredMaterial, PBRMaterial } from "../materials";
 import { GL_Textures } from "../gl/glTextures";
 import { Texture } from "./texture";
 import { GL_ConstantsMapping } from "../gl/glConstantsMapping";
 import { GL_ProgramManager } from "../gl/glProgramManager";
-import { calcBBox } from "../util/boundary";
 
 export class WebGLRenderer {
     gl: WebGL2RenderingContext;
@@ -127,7 +124,7 @@ export class WebGLRenderer {
 
     renderBufferDirect(program: GL_Program, bindingState: GL_BindingState) {
         if (bindingState.indexBuffer) {
-            program.drawArray(0, bindingState.indexBuffer.structuredData.getTriangleCount());
+            program.drawElements(0, bindingState.indexBuffer.structuredData.getTriangleCount());
         } else {
             const vertexStructuredData = bindingState.vertexAttributeBuffer.structuredData;
             const positionAccessor = vertexStructuredData.accessors.position;

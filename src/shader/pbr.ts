@@ -4,11 +4,8 @@ export const vertex = /* glsl */ `#version 300 es
 
 	in vec3 position;
 
-	uniform mat4 projMatrix;
-	uniform mat4 mvMatrix;
-
 	void main() {
-		gl_Position = projMatrix * mvMatrix * vec4(position, 1.0);
+		gl_Position = vec4(position, 1.0);
 	}
 `;
 
@@ -19,8 +16,6 @@ export const fragment = /* glsl */ `#version 300 es
 	#define PI 3.1415926535897932384632
 	#define RECIPROCAL_PI 0.3183098861837907
 	#define EPSILON 1e-6
-
-	in vec2 v_uv;
 
 	struct DirLight {
 		vec3 direction;
