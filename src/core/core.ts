@@ -1,4 +1,4 @@
-import { Vec3, Mat3, Mat4, Quat } from "gl-matrix";
+import { Vec3, Mat3, Mat4, Quat, Vec4 } from "gl-matrix";
 import { BufferLayout, StructuredData, TypedArrayCode } from "../util";
 import { DEG2RAD } from "../math/math";
 import { Texture } from "./texture";
@@ -26,7 +26,9 @@ class Material {
         return this._normalMap;
     }
 
-    uniforms: Record<string, any> = {};
+    uniforms: Record<string, any> = {
+        diffuse: new Vec4(1, 1, 1, 1),
+    };
     constructor(public name: string) {}
 }
 class Geometry<T extends BufferLayout = BufferLayout> {
@@ -104,23 +106,23 @@ class Mesh extends Object3D {
         super();
     }
 
-    alignToBBoxCenter(bbox?: [Vec3, Vec3]) {
+    alignToBBox(bbox?: [Vec3, Vec3], align: "center" | "bottom" | "top" = "center") {
         bbox = bbox || this.geometry.bbox;
         if (bbox != null) {
             const center = new Vec3(
-                bbox[0][0] + (bbox[1][0] - bbox[0][0]) / 2,
-                bbox[0][1] + (bbox[1][1] - bbox[0][1]) / 2,
-                bbox[0][2] + (bbox[1][2] - bbox[0][2]) / 2
+                bbox[0].x + (bbox[1].x - bbox[0].x) / 2,
+                0,
+                bbox[0].z + (bbox[1].z - bbox[0].z) / 2
             );
+            if (align === "center") {
+                center.y = bbox[0].y + (bbox[1].y - bbox[0].y) / 2;
+            } else if (align === "bottom") {
+                center.y = bbox[0].y;
+            } else if (align === "top") {
+                center.y = bbox[1].y;
+            }
 
             this.position = this.position.sub(center);
-
-            // const mv = new Mat4().translate(new Vec3(-center[0], -center[1], -center[2]));
-            // Mat4.multiply(this.matrixWorld, mv, this.matrixWorld);
-            // Mat4.invert(this.matrixWorldInv, this.matrixWorld);
-            // // this.matrix[4 * 3] -= center[0];
-            // // this.matrix[4 * 3 + 1] -= center[1];
-            // // this.matrix[4 * 3 + 1] -= center[2];
         }
     }
 }

@@ -11,6 +11,7 @@ import { TextureLoader } from "./loader/TextureLoader";
 import { OBJLoader } from "./loader/OBJLoader";
 import { ScreenPlane } from "./geometry/ScreenPlane";
 import { getAdaptiveAspectRatio } from "./util/texture";
+import { Plane } from "./geometry/Plane";
 const canvas = document.getElementById("webglcanvas") as HTMLCanvasElement;
 const renderer = new WebGLRenderer(canvas);
 const gl = renderer.gl;
@@ -26,6 +27,7 @@ const bunny = objLoader2.load("/3d-models/stanford-bunny.obj");
 
 const geometryPassGeometry = bunny;
 const screenPlane = new ScreenPlane();
+const groundPlane = new Plane();
 
 // let box = new BoxGeometry(2, 2, 2);
 // box = bunny;
@@ -52,14 +54,15 @@ orbitControl.setupEventListeners();
 /*                              DeferredMaterials                             */
 /* -------------------------------------------------------------------------- */
 
+const deferredMaterial = new DeferredMaterial();
+const geometryPassMesh = new Mesh(geometryPassGeometry, deferredMaterial);
+
 const diffuseMap = new TextureLoader().load("/textures/medieval_red_brick_1k/medieval_red_brick_diff_1k.jpg");
 const normalMap = new TextureLoader().load("/textures/medieval_red_brick_1k/medieval_red_brick_nor_gl_1k.png");
-const deferredMaterial = new DeferredMaterial();
-// deferredMaterial.map = diffuseMap;
-// deferredMaterial.normalMap = normalMap;
-deferredMaterial.uniforms.diffuse = new Vec4(1, 1, 1, 1.0);
-
-const geometryPassMesh = new Mesh(geometryPassGeometry, deferredMaterial);
+const deferredMaterial4Plane = new DeferredMaterial();
+deferredMaterial4Plane.map = diffuseMap;
+deferredMaterial4Plane.normalMap = normalMap;
+const geometryPassMesh4Plane = new Mesh(groundPlane, deferredMaterial4Plane);
 
 const depthTexture = new DepthTexture(gl);
 
@@ -122,7 +125,7 @@ debugMaterial4.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
 /*                                   Scenes                                   */
 /* -------------------------------------------------------------------------- */
 
-const deferredScene = new Scene([geometryPassMesh]);
+const deferredScene = new Scene([geometryPassMesh, geometryPassMesh4Plane]);
 
 const viewportScene1 = new Scene([debug1]);
 const viewportScene2 = new Scene([debug2]);
@@ -136,7 +139,7 @@ const renderScene = new Scene([lightingPassMesh, dirLight]);
 /* -------------------------------------------------------------------------- */
 objLoader2.onLoad((obj) => {
     geometryPassMesh.scale.set([5, 5, 5]);
-    geometryPassMesh.alignToBBoxCenter(obj.bbox);
+    geometryPassMesh.alignToBBox(obj.bbox, "bottom");
 });
 
 /* -------------------------------------------------------------------------- */
