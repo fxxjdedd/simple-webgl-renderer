@@ -3,6 +3,7 @@ import { BufferLayout, StructuredData, TypedArrayCode } from "../util";
 import { DEG2RAD } from "../math/math";
 import { Texture } from "./texture";
 import { calcBBox } from "../util/boundary";
+import { ObjectSpaceNormalMap } from "../constants";
 
 class Material {
     private _map: Texture;
@@ -126,6 +127,12 @@ class Mesh extends Object3D {
 
 class Scene extends Object3D {
     objects: Object3D[] = [];
+    constructor(objects?: Object3D[]) {
+        super();
+        if (objects) {
+            this.objects = objects;
+        }
+    }
 }
 
 class Camera extends Object3D {

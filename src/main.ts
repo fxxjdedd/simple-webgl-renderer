@@ -6,16 +6,10 @@ import { WebGLRenderTarget } from "./core/renderTarget";
 import { DepthTexture } from "./textures/depthTexture";
 import { Vec3, Vec4 } from "gl-matrix";
 import { DirectionalLight } from "./core/light";
-import { DeferredDebugMaterial, DeferredMaterial, PBRMaterial } from "./materials";
+import { DebugMaterial, DeferredDebugMaterial, DeferredMaterial, PBRMaterial } from "./materials";
 import { TextureLoader } from "./loader/TextureLoader";
 import { OBJLoader } from "./loader/OBJLoader";
 import { ScreenPlane } from "./geometry/ScreenPlane";
-
-const objLoader1 = new OBJLoader();
-const objLoader2 = new OBJLoader();
-const cube = objLoader1.load("/3d-models/cube.obj");
-const bunny = objLoader2.load("/3d-models/stanford-bunny.obj");
-
 const canvas = document.getElementById("webglcanvas") as HTMLCanvasElement;
 const renderer = new WebGLRenderer(canvas);
 const gl = renderer.gl;
@@ -24,11 +18,18 @@ const gl = renderer.gl;
 /*                                 Geometries                                 */
 /* -------------------------------------------------------------------------- */
 
-let box = new BoxGeometry(2, 2, 2);
+// const objLoader1 = new OBJLoader();
+const objLoader2 = new OBJLoader();
+// const cube = objLoader1.load("/3d-models/cube.obj");
+const bunny = objLoader2.load("/3d-models/stanford-bunny.obj");
 
-box = bunny;
+const geometryPassGeometry = bunny;
+const screenPlane = new ScreenPlane();
 
-console.log(box);
+// let box = new BoxGeometry(2, 2, 2);
+// box = bunny;
+// console.log(box);
+
 /* -------------------------------------------------------------------------- */
 /*                                   Cameras                                  */
 /* -------------------------------------------------------------------------- */
@@ -57,7 +58,7 @@ deferredMaterial.map = diffuseMap;
 // deferredMaterial.normalMap = normalMap;
 deferredMaterial.uniforms.diffuse = new Vec4(1, 1, 1, 1.0);
 
-const geometryPassMesh = new Mesh(box, deferredMaterial);
+const geometryPassMesh = new Mesh(geometryPassGeometry, deferredMaterial);
 
 const depthTexture = new DepthTexture(gl);
 
@@ -65,7 +66,7 @@ const renderTarget = new WebGLRenderTarget(
     canvas.width * window.devicePixelRatio,
     canvas.height * window.devicePixelRatio,
     {
-        enableDepthBuffer: false,
+        enableDepthBuffer: true,
         depthTexture: depthTexture,
         colorsCount: 3,
     }
@@ -74,8 +75,6 @@ const renderTarget = new WebGLRenderTarget(
 /* -------------------------------------------------------------------------- */
 /*                                PBRMaterials                                */
 /* -------------------------------------------------------------------------- */
-const screenPlane = new ScreenPlane();
-console.log("🚀 ~ screenPlane :", screenPlane);
 const pbrMaterial = new PBRMaterial();
 const lightingPassMesh = new Mesh(screenPlane, pbrMaterial);
 pbrMaterial.uniforms = {
@@ -96,32 +95,35 @@ dirLight.color = new Vec3(1, 1, 1);
 /*                           DeferredDebugMaterials                           */
 /* -------------------------------------------------------------------------- */
 
-const deferredDebugMaterial1 = new DeferredDebugMaterial();
-const boxMesh4depthviewer1 = new Mesh(box, deferredDebugMaterial1);
-boxMesh4depthviewer1.position = new Vec3(0, 0, 0);
-deferredDebugMaterial1.map = renderTarget.textures[0];
-
-const deferredDebugMaterial2 = new DeferredDebugMaterial();
-const boxMesh4depthviewer2 = new Mesh(box, deferredDebugMaterial2);
-boxMesh4depthviewer2.position = new Vec3(-2, 0, 0);
-deferredDebugMaterial2.map = renderTarget.textures[1];
-
-const deferredDebugMaterial3 = new DeferredDebugMaterial();
-const boxMesh4depthviewer3 = new Mesh(box, deferredDebugMaterial3);
-boxMesh4depthviewer3.position = new Vec3(2, 0, 0);
-deferredDebugMaterial3.map = depthTexture;
+const debugMaterial1 = new DebugMaterial();
+const debugMaterial2 = new DebugMaterial();
+const debugMaterial3 = new DebugMaterial();
+const debugMaterial4 = new DebugMaterial();
+const debug1 = new Mesh(screenPlane, debugMaterial1);
+const debug2 = new Mesh(screenPlane, debugMaterial2);
+const debug3 = new Mesh(screenPlane, debugMaterial3);
+const debug4 = new Mesh(screenPlane, debugMaterial4);
+debugMaterial1.map = renderTarget.textures[0];
+debugMaterial2.map = renderTarget.textures[1];
+debugMaterial3.map = renderTarget.textures[2];
+debugMaterial4.map = depthTexture;
 
 /* -------------------------------------------------------------------------- */
 /*                                   Scenes                                   */
 /* -------------------------------------------------------------------------- */
 
-const deferredScene = new Scene();
-deferredScene.objects = [geometryPassMesh];
-const viewportScene = new Scene();
-viewportScene.objects = [boxMesh4depthviewer1, boxMesh4depthviewer2, boxMesh4depthviewer3];
-const renderScene = new Scene();
-renderScene.objects = [lightingPassMesh, dirLight];
+const deferredScene = new Scene([geometryPassMesh]);
 
+const viewportScene1 = new Scene([debug1]);
+const viewportScene2 = new Scene([debug2]);
+const viewportScene3 = new Scene([debug3]);
+const viewportScene4 = new Scene([debug4]);
+
+const renderScene = new Scene([lightingPassMesh, dirLight]);
+
+/* -------------------------------------------------------------------------- */
+/*                               event handlers                               */
+/* -------------------------------------------------------------------------- */
 objLoader2.onLoad((obj) => {
     geometryPassMesh.scale.set([10, 10, 10]);
     geometryPassMesh.alignToBBoxCenter(obj.bbox);
@@ -138,9 +140,22 @@ function animate() {
 
     renderer.render(renderScene, camera);
 
-    // renderer.setViewport(0, 0, canvas.width / 3, canvas.height / 3);
-    // renderer.setClearbits(0);
-    // renderer.render(viewportScene, camera);
+    const blockSize = canvas.height / 5;
+    renderer.setViewport(0, 0, blockSize, blockSize);
+    renderer.setClearbits(0);
+    renderer.render(viewportScene1, camera);
+
+    renderer.setViewport(blockSize, 0, blockSize, blockSize);
+    renderer.setClearbits(0);
+    renderer.render(viewportScene2, camera);
+
+    renderer.setViewport(blockSize, blockSize, blockSize, blockSize);
+    renderer.setClearbits(0);
+    renderer.render(viewportScene3, camera);
+
+    renderer.setViewport(0, blockSize, blockSize, blockSize);
+    renderer.setClearbits(0);
+    renderer.render(viewportScene4, camera);
 
     requestAnimationFrame(() => {
         animate();

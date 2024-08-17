@@ -10,6 +10,7 @@ import { GL_Textures } from "../gl/glTextures";
 import { Texture } from "./texture";
 import { GL_ConstantsMapping } from "../gl/glConstantsMapping";
 import { GL_ProgramManager } from "../gl/glProgramManager";
+import { DepthTexture } from "../textures/depthTexture";
 
 export class WebGLRenderer {
     gl: WebGL2RenderingContext;
@@ -39,7 +40,7 @@ export class WebGLRenderer {
         // NOTE: depth is not linear, see: https://learnopengl.com/Advanced-OpenGL/Depth-testing
         this.gl.clearDepth(1);
         this.gl.enable(this.gl.DEPTH_TEST);
-        this.gl.depthFunc(this.gl.LESS);
+        this.gl.depthFunc(this.gl.LEQUAL);
         if (this.clearBits > 0) {
             this.gl.clear(this.clearBits);
         }
@@ -78,6 +79,10 @@ export class WebGLRenderer {
             const value = mesh.material.uniforms[name];
             if (name === "normalMap" && value instanceof Texture) {
                 defines["USE_NORMAL_MAP"] = 1;
+            }
+
+            if (name === "map" && value instanceof DepthTexture) {
+                defines["IS_DEPTH_MAP"] = 1;
             }
         }
 
