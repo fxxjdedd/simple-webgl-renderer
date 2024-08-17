@@ -55,7 +55,7 @@ orbitControl.setupEventListeners();
 const diffuseMap = new TextureLoader().load("/textures/medieval_red_brick_1k/medieval_red_brick_diff_1k.jpg");
 const normalMap = new TextureLoader().load("/textures/medieval_red_brick_1k/medieval_red_brick_nor_gl_1k.png");
 const deferredMaterial = new DeferredMaterial();
-deferredMaterial.map = diffuseMap;
+// deferredMaterial.map = diffuseMap;
 // deferredMaterial.normalMap = normalMap;
 deferredMaterial.uniforms.diffuse = new Vec4(1, 1, 1, 1.0);
 
@@ -91,6 +91,7 @@ const dirLight = new DirectionalLight();
 dirLight.position = new Vec3(5, 5, 5);
 dirLight.target = geometryPassMesh;
 dirLight.color = new Vec3(1, 1, 1);
+dirLight.intensity = 6.0;
 
 /* -------------------------------------------------------------------------- */
 /*                           DeferredDebugMaterials                           */

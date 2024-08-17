@@ -141,7 +141,7 @@ export const fragment = /* glsl */ `#version 300 es
 		vec3 Wi = dirLight.direction;
 		vec3 Wo = inverse(mvMatrix)[3].xyz - pos;
 		float dtLN = clamp(dot(normal, normalize(dirLight.direction)), 0.0, 1.0);
-		vec3 Li = dtLN * dirLight.color; // radiance
+		vec3 Li = dtLN * dirLight.color * dirLight.intensity; // radiance
 
 		// direct lighting
 		outLight.diffuseColor += Li * BRDF_DiffusePart(pbrMaterial.diffuseColor);

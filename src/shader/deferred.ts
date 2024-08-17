@@ -19,7 +19,6 @@ export const vertex = /* glsl */ `#version 300 es
 		vec4 worldPos = modelMatrix * vec4(position, 1.0);
 		v_pos = worldPos.xyz;
 		// http://www.lighthouse3d.com/tutorials/glsl-12-tutorial/the-normal-matrix/
-		// v_normal = normal;
 		v_normal = normalMatrix * normal;
 		v_uv = uv;
 		gl_Position = projMatrix * mvMatrix * vec4(position, 1.0);
@@ -38,8 +37,12 @@ export const fragment = /* glsl */ `#version 300 es
 	layout(location = 1) out vec4 g_normal;
 	layout(location = 2) out vec4 g_pos;
 
+#ifdef USE_MAP
 	uniform sampler2D map;
+#endif
+#ifdef USE_NORMAL_MAP
 	uniform sampler2D normalMap;
+#endif
 	uniform vec4 diffuse;
 
 	uniform mat4 viewMatrix;
@@ -71,7 +74,12 @@ export const fragment = /* glsl */ `#version 300 es
 #else
 		g_normal = vec4((v_normal + 1.0) / 2.0, 1.0);
 #endif
+
+#ifdef USE_MAP
 		g_diffuse = texture(map, v_uv) * diffuse;
+#else
+		g_diffuse = diffuse;
+#endif
 		g_pos = vec4((v_pos + 1.0) / 2.0, 1.0);
 	}
 `;

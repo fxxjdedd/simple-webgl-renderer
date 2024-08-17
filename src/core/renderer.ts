@@ -81,6 +81,10 @@ export class WebGLRenderer {
                 defines["USE_NORMAL_MAP"] = 1;
             }
 
+            if (name === "map" && value instanceof Texture) {
+                defines["USE_MAP"] = 1;
+            }
+
             if (name === "map" && value instanceof DepthTexture) {
                 defines["IS_DEPTH_MAP"] = 1;
             }
