@@ -157,7 +157,7 @@ class Camera extends Object3D {
     }
 }
 class PerspectiveCamera extends Camera {
-    public zoom = 0.001;
+    public zoom = 1;
     constructor(public fov = 60, public aspect = 1, public near = 0.1, public far = 100) {
         super();
         this.updateProjectionMatrix();

@@ -1,4 +1,4 @@
-import { Camera } from "../core/core";
+import { Camera, PerspectiveCamera } from "../core/core";
 import { WebGLRenderer } from "../core/renderer";
 import { Vec3, Vec2, Quat, Vec3Like } from "gl-matrix";
 import { clamp } from "../util/math";
@@ -89,7 +89,13 @@ export class OrbitControl {
         e.preventDefault();
     };
 
-    handleWheel = () => {};
+    handleWheel = (e: WheelEvent) => {
+        if (this.camera instanceof PerspectiveCamera) {
+            let zoom = this.camera.zoom - e.deltaY * 0.001;
+            this.camera.zoom = Math.min(Math.max(zoom, 1e-7), 5);
+            this.camera.updateProjectionMatrix();
+        }
+    };
 
     handlePointerMove = (e: PointerEvent) => {
         const dom = this.renderer.canvas;

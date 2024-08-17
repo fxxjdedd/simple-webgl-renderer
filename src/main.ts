@@ -135,7 +135,7 @@ const renderScene = new Scene([lightingPassMesh, dirLight]);
 /*                               event handlers                               */
 /* -------------------------------------------------------------------------- */
 objLoader2.onLoad((obj) => {
-    geometryPassMesh.scale.set([10, 10, 10]);
+    geometryPassMesh.scale.set([5, 5, 5]);
     geometryPassMesh.alignToBBoxCenter(obj.bbox);
 });
 
