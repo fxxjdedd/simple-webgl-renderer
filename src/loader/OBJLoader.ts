@@ -120,8 +120,6 @@ export class OBJLoader extends Loader<Geometry> {
                     geometry.position.push(...posB);
                     geometry.position.push(...posC);
 
-                    setArrayRange(geometry.position, i1 * 3, source.v, (v1[1] - 1) * 2, 2);
-
                     if (v1[1] && v2[1] && v3[1]) {
                         const t1 = v1[1] - 1;
                         const t2 = v2[1] - 1;
