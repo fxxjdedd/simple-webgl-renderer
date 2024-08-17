@@ -1,6 +1,7 @@
 import { Camera } from "../core/core";
 import { WebGLRenderer } from "../core/renderer";
 import { Vec3, Vec2, Quat, Vec3Like } from "gl-matrix";
+import { clamp } from "../util/math";
 
 enum ControlState {
     none,
@@ -139,9 +140,14 @@ export class OrbitControl {
 
         let ssPosition = new Vec3();
         Vec3.transformQuat(ssPosition, this.camera.position, quat);
+
         this.sphericalCoords.setFromCoord(ssPosition);
         this.sphericalCoords.phi += this.rotateState.phi;
         this.sphericalCoords.theta += this.rotateState.theta;
+
+        // avoid phi to be out of range, which will make camera jitter
+        this.sphericalCoords.ensurePhiSafty();
+
         ssPosition = this.sphericalCoords.getCoords();
         this.rotateState.set([0, 0, 0]);
 
@@ -178,14 +184,18 @@ class SphericalCoords {
         this.radius = v[2];
     }
 
+    ensurePhiSafty() {
+        const EPS = 0.000001;
+        this.phi = Math.max(EPS, Math.min(Math.PI - EPS, this.phi));
+    }
+
     setFromCoord(coord: Vec3) {
         const mag = Vec3.mag(coord);
-        const theta = Math.atan(coord.x / coord.z);
-        const phi = Math.acos(coord.y / mag);
-
+        const theta = Math.atan2(coord.x, coord.z);
+        const phi = Math.acos(clamp(coord.y / mag, -1, 1));
         this.radius = mag;
-        this.phi = phi;
         this.theta = theta;
+        this.phi = phi;
     }
 
     getCoords() {

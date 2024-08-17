@@ -36,9 +36,9 @@ const screenPlane = new ScreenPlane();
 /* -------------------------------------------------------------------------- */
 
 const camera = new PerspectiveCamera(60, canvas.width / canvas.height, 0.1, 10);
-camera.position.x = 1;
-camera.position.y = 1;
-camera.position.z = 2;
+camera.position.x = 0;
+camera.position.y = 0.5;
+camera.position.z = 1;
 camera.lookAt(0, 0, 0);
 
 /* -------------------------------------------------------------------------- */
