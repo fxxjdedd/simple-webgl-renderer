@@ -98,9 +98,11 @@ export class GL_Program {
 
     prefixVertShader(defines, vertShader) {
         // prettier-ignore
-        const prefix = [
-            defines.USE_NORMAL_MAP ? "#define USE_NORMAL_MAP" : ""
-        ].join("\n");
+        const prefixArray = []
+        for (const key in defines) {
+            prefixArray.push(`#define ${key}`);
+        }
+        const prefix = prefixArray.join("\n");
         const [_, content] = vertShader.split("#version 300 es\n");
 
         return "#version 300 es\n" + prefix + "\n" + content;
@@ -108,10 +110,11 @@ export class GL_Program {
 
     prefixFragShader(defines, fragShader) {
         // prettier-ignore
-        const prefix = [
-            defines.USE_NORMAL_MAP ? "#define USE_NORMAL_MAP" : ""
-        ].join("\n");
-
+        const prefixArray = []
+        for (const key in defines) {
+            prefixArray.push(`#define ${key}`);
+        }
+        const prefix = prefixArray.join("\n");
         const [_, content] = fragShader.split("#version 300 es\n");
 
         return "#version 300 es\n" + prefix + "\n" + content;

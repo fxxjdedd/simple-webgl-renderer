@@ -1,5 +1,5 @@
-import { DeferredDebugMaterial, DeferredMaterial, PBRMaterial } from "../materials";
-import { deferredShader, pbrShader, deferredDebugShader } from "../shader";
+import { DebugMaterial, DeferredDebugMaterial, DeferredMaterial, PBRMaterial } from "../materials";
+import { deferredShader, pbrShader, deferredDebugShader, debugShader } from "../shader";
 import { GL_Program } from "./glProgram";
 export class GL_ProgramManager {
     cache = {} as Record<string, GL_Program>;
@@ -16,6 +16,8 @@ export class GL_ProgramManager {
 
     private getShader(name) {
         switch (name) {
+            case DebugMaterial.name:
+                return debugShader;
             case DeferredDebugMaterial.name:
                 return deferredDebugShader;
             case PBRMaterial.name:
