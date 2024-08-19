@@ -1,8 +1,8 @@
-import { Vec3 } from "gl-matrix";
+import { Vec3, Vec3Like } from "gl-matrix";
 import { DirectionalLight, Light } from "../core/light";
 
 export class GL_Lights {
-    dirLights = [];
+    dirLights: { direction: Vec3Like; intensity: number; color: Vec3 }[] = [];
 
     setupLights(lights: Light[]) {
         let dirLightIndex = 0;

@@ -11,6 +11,7 @@ import { Texture } from "./texture";
 import { GL_ConstantsMapping } from "../gl/glConstantsMapping";
 import { GL_ProgramManager } from "../gl/glProgramManager";
 import { DepthTexture } from "../textures/depthTexture";
+import { GL_ShadowPass } from "../gl/pass/glShadowPass";
 
 export class WebGLRenderer {
     gl: WebGL2RenderingContext;
@@ -22,6 +23,7 @@ export class WebGLRenderer {
     constantsMapping: GL_ConstantsMapping;
     clearBits = 0;
     viewport: Vec4;
+    shadowPass: GL_ShadowPass;
 
     constructor(public canvas: HTMLCanvasElement) {
         const gl = (this.gl = canvas.getContext("webgl2"));
@@ -33,6 +35,7 @@ export class WebGLRenderer {
         this.clearBits = this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT;
         this.viewport = new Vec4(0, 0, this.canvas.width, this.canvas.height);
         this.renderState = new GL_RenderState();
+        this.shadowPass = new GL_ShadowPass(this);
     }
 
     render(scene: Scene, camera: Camera) {
@@ -54,6 +57,10 @@ export class WebGLRenderer {
                 this.renderState.addLight(obj);
             }
         }
+
+        const shadowLights = this.renderState.getLights().filter((light) => light.castShadow);
+
+        this.shadowPass.render(shadowLights, scene, camera);
 
         this.renderState.setup();
 
@@ -96,8 +103,6 @@ export class WebGLRenderer {
         }
 
         this.textures.resetTextureUnit();
-        this.gl.createTexture();
-        this.state.bindTexture(0, null);
 
         this.gl.useProgram(program.program);
 

@@ -91,6 +91,7 @@ pbrMaterial.uniforms = {
 };
 
 const dirLight = new DirectionalLight();
+dirLight.castShadow = true;
 dirLight.position = new Vec3(5, 5, 5);
 dirLight.target = geometryPassMesh;
 dirLight.color = new Vec3(1, 1, 1);
