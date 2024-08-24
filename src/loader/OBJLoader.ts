@@ -3,7 +3,6 @@ import { Geometry } from "../core/core";
 import { StructuredData, TypedArrayCode } from "../util";
 import { Loader } from "./Loader";
 
-// 分隔符
 const separator = /\s{1,2}/g;
 
 export class OBJLoader extends Loader<Geometry> {
@@ -67,12 +66,6 @@ export class OBJLoader extends Loader<Geometry> {
 
         const lines = content.split(/\n/g);
 
-        function setArrayRange(arr1, start, arr2, start2, count) {
-            for (let i = 0, j = start2; j < start2 + count; i++, j++) {
-                arr1[start + i] = arr2[j];
-            }
-        }
-
         for (let line of lines) {
             line = line.trim();
             const parts = line.trim().split(separator);
@@ -91,8 +84,6 @@ export class OBJLoader extends Loader<Geometry> {
                         bboxMax[2] = Math.max(bboxMax[2], pos[2]);
 
                         source.v.push(...pos);
-                        // geometry.normal.length += 3;
-                        // geometry.uv.length += 2;
                         break;
                     case "vn":
                         source.vn.push(parseFloat(parts[1]), parseFloat(parts[2]), parseFloat(parts[3]));

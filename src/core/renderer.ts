@@ -1,6 +1,6 @@
 import { Vec3, Mat4, Quat, Vec4, Mat3 } from "gl-matrix";
 import { GL_Program } from "../gl/glProgram";
-import { Camera, Material, Mesh, Scene } from "./core";
+import { Camera, Geometry, Material, Mesh, Object3D, Scene } from "./core";
 import { GL_BindingState, GL_BindingStates } from "../gl/glBindingStates";
 import { WebGLRenderTarget } from "./renderTarget";
 import { GL_State } from "../gl/glState";
@@ -11,7 +11,7 @@ import { Texture } from "./texture";
 import { GL_ConstantsMapping } from "../gl/glConstantsMapping";
 import { GL_ProgramManager } from "../gl/glProgramManager";
 import { DepthTexture } from "../textures/depthTexture";
-import { GL_ShadowPass } from "../gl/pass/glShadowPass";
+import { GL_ShadowDepthPass } from "../gl/pass/glShadowDepthPass";
 
 export class WebGLRenderer {
     gl: WebGL2RenderingContext;
@@ -23,7 +23,10 @@ export class WebGLRenderer {
     constantsMapping: GL_ConstantsMapping;
     clearBits = 0;
     viewport: Vec4;
-    shadowPass: GL_ShadowPass;
+    shadowDepthPass: GL_ShadowDepthPass;
+    currentRenderTarget: WebGLRenderTarget = null;
+
+    enableShadowPass = false;
 
     constructor(public canvas: HTMLCanvasElement) {
         const gl = (this.gl = canvas.getContext("webgl2"));
@@ -35,7 +38,7 @@ export class WebGLRenderer {
         this.clearBits = this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT;
         this.viewport = new Vec4(0, 0, this.canvas.width, this.canvas.height);
         this.renderState = new GL_RenderState();
-        this.shadowPass = new GL_ShadowPass(this);
+        this.shadowDepthPass = new GL_ShadowDepthPass(this);
     }
 
     render(scene: Scene, camera: Camera) {
@@ -52,21 +55,23 @@ export class WebGLRenderer {
 
         camera.updateMatrixWorld();
 
-        for (const obj of scene.objects) {
+        for (const obj of scene.children) {
             if (obj instanceof Light) {
                 this.renderState.addLight(obj);
             }
         }
 
-        const shadowLights = this.renderState.getLights().filter((light) => light.castShadow);
+        if (this.enableShadowPass) {
+            const shadowLights = this.renderState.getLights().filter((light) => light.castShadow);
 
-        this.shadowPass.render(shadowLights, scene, camera);
+            this.shadowDepthPass.render(shadowLights, scene, camera);
+        }
 
         this.renderState.setup();
 
-        for (const obj of scene.objects) {
+        for (const obj of scene.children) {
             if (obj instanceof Mesh) {
-                this.renderMesh(obj, camera);
+                this.renderObject(obj, obj.geometry, obj.material, camera);
             }
         }
 
@@ -74,16 +79,16 @@ export class WebGLRenderer {
         this.viewport = new Vec4(0, 0, this.canvas.width, this.canvas.height);
     }
 
-    renderMesh(mesh: Mesh, camera: Camera) {
-        mesh.updateMatrixWorld();
+    renderObject(object: Object3D, geometry: Geometry, material: Material, camera: Camera) {
+        object.updateMatrixWorld();
 
-        Mat4.multiply(mesh.mvMatrix, camera.matrixWorldInv, mesh.matrixWorld);
+        Mat4.multiply(object.mvMatrix, camera.matrixWorldInv, object.matrixWorld);
 
-        Mat3.fromMat4(mesh.normalMatrix, Mat4.clone(mesh.mvMatrix).invert().transpose());
+        Mat3.fromMat4(object.normalMatrix, Mat4.clone(object.mvMatrix).invert().transpose());
 
         const defines = {};
-        for (const name in mesh.material.uniforms) {
-            const value = mesh.material.uniforms[name];
+        for (const name in material.uniforms) {
+            const value = material.uniforms[name];
             if (name === "normalMap" && value instanceof Texture) {
                 defines["USE_NORMAL_MAP"] = 1;
             }
@@ -97,9 +102,9 @@ export class WebGLRenderer {
             }
         }
 
-        const program = this.programManager.getProgram(mesh.material.name, defines);
+        const program = this.programManager.getProgram(material.name, defines);
         if (!program) {
-            throw new Error("No properly program found for material: " + mesh.material.name);
+            throw new Error("No properly program found for material: " + material.name);
         }
 
         this.textures.resetTextureUnit();
@@ -108,17 +113,17 @@ export class WebGLRenderer {
 
         // prettier-ignore
         program.setUniform("projMatrix", camera.projectionMatrix);
-        program.setUniform("mvMatrix", mesh.mvMatrix);
+        program.setUniform("mvMatrix", object.mvMatrix);
         program.setUniform("viewMatrix", camera.matrixWorldInv);
-        program.setUniform("modelMatrix", mesh.matrixWorld);
-        program.setUniform("normalMatrix", mesh.normalMatrix);
+        program.setUniform("modelMatrix", object.matrixWorld);
+        program.setUniform("normalMatrix", object.normalMatrix);
         program.setUniform("viewport", this.viewport);
         if (this.renderState.hasLight) {
             program.setUniform("dirLight", this.renderState.lights.dirLights[0]);
         }
 
-        for (const name in mesh.material.uniforms) {
-            const value = mesh.material.uniforms[name];
+        for (const name in material.uniforms) {
+            const value = material.uniforms[name];
             if (value instanceof Texture) {
                 program.setUniform(name, value, this.textures);
             } else {
@@ -127,8 +132,8 @@ export class WebGLRenderer {
         }
 
         let bindingState: GL_BindingState;
-        if (!(bindingState = this.bindingStates.getBindingState(program, mesh.geometry))) {
-            bindingState = this.bindingStates.setBindingState(program, mesh.geometry);
+        if (!(bindingState = this.bindingStates.getBindingState(program, geometry))) {
+            bindingState = this.bindingStates.setBindingState(program, geometry);
         }
 
         bindingState.bind();
@@ -149,6 +154,7 @@ export class WebGLRenderer {
 
     setRenderTarget(renderTarget: WebGLRenderTarget) {
         if (renderTarget !== null) {
+            this.currentRenderTarget = renderTarget;
             renderTarget.setupRenderTarget(this.gl, this.textures);
 
             this.state.bindFrameBuffer(renderTarget.framebuffer);
@@ -158,6 +164,7 @@ export class WebGLRenderer {
             // https://www.khronos.org/opengl/wiki/Framebuffer_Object#Framebuffer_Completeness
             // const r = this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER);
         } else {
+            this.currentRenderTarget = null;
             this.state.bindFrameBuffer(null);
             this.state.drawBuffers(null);
             this.setViewport(0, 0, this.canvas.width, this.canvas.height);

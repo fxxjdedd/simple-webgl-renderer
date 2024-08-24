@@ -1,5 +1,5 @@
 import { OrbitControl } from "./control/OrbitControl";
-import { Geometry, Mesh, PerspectiveCamera, Scene } from "./core/core";
+import { Geometry, Mesh, OrthoCamera, PerspectiveCamera, Scene } from "./core/core";
 import { BoxGeometry } from "./geometry/BoxGeometry";
 import { WebGLRenderer } from "./core/renderer";
 import { WebGLRenderTarget } from "./core/renderTarget";
@@ -38,7 +38,8 @@ const groundPlane = new Plane();
 /* -------------------------------------------------------------------------- */
 
 const camera = new PerspectiveCamera(60, canvas.width / canvas.height, 0.1, 10);
-camera.position.x = 0;
+// const camera = new OrthoCamera(-5, 5, 5, -5, 0.05, 500);
+camera.position.x = 1;
 camera.position.y = 0.5;
 camera.position.z = 1;
 camera.lookAt(0, 0, 0);
@@ -56,6 +57,7 @@ orbitControl.setupEventListeners();
 
 const deferredMaterial = new DeferredMaterial();
 const geometryPassMesh = new Mesh(geometryPassGeometry, deferredMaterial);
+geometryPassMesh.castShadow = true;
 
 const diffuseMap = new TextureLoader().load("/textures/medieval_red_brick_1k/medieval_red_brick_diff_1k.jpg");
 const normalMap = new TextureLoader().load("/textures/medieval_red_brick_1k/medieval_red_brick_nor_gl_1k.png");
@@ -126,14 +128,13 @@ debugMaterial4.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
 /*                                   Scenes                                   */
 /* -------------------------------------------------------------------------- */
 
-const deferredScene = new Scene([geometryPassMesh, geometryPassMesh4Plane]);
+const deferredScene = new Scene([geometryPassMesh, geometryPassMesh4Plane, dirLight]);
+const renderScene = new Scene([lightingPassMesh, dirLight]);
 
 const viewportScene1 = new Scene([debug1]);
 const viewportScene2 = new Scene([debug2]);
 const viewportScene3 = new Scene([debug3]);
 const viewportScene4 = new Scene([debug4]);
-
-const renderScene = new Scene([lightingPassMesh, dirLight]);
 
 /* -------------------------------------------------------------------------- */
 /*                               event handlers                               */
@@ -147,10 +148,14 @@ objLoader2.onLoad((obj) => {
 /*                                  run loop                                  */
 /* -------------------------------------------------------------------------- */
 function animate() {
+    renderer.enableShadowPass = true;
+
     renderer.setRenderTarget(renderTarget);
     renderer.render(deferredScene, camera);
 
     renderer.setRenderTarget(null);
+
+    renderer.enableShadowPass = false;
 
     renderer.render(renderScene, camera);
 

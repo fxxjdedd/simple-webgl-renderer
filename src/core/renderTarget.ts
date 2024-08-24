@@ -17,8 +17,14 @@ export class WebGLRenderTarget {
     }
 
     constructor(public width: number, public height: number, public options?: RenderTargetOptions) {
+        this.options = {
+            colorsCount: 1,
+            enableDepthBuffer: false,
+            depthTexture: null,
+            ...options,
+        };
         for (let i = 0; i < this.options.colorsCount; i++) {
-            const { enableDepthBuffer, depthTexture, colorsCount, ...textureParam } = options;
+            const { enableDepthBuffer, depthTexture, colorsCount, ...textureParam } = this.options;
             const texture = new Texture({ width, height }, textureParam);
             texture.isRenderTargetTexture = true;
             this.textures.push(texture);
