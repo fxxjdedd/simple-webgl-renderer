@@ -3,9 +3,9 @@ import { GL_Textures } from "../gl/glTextures";
 import { Texture, TextureParam } from "./texture";
 
 type RenderTargetOptions = Partial<TextureParam> & {
-    enableDepthBuffer: boolean;
-    depthTexture: Texture;
-    colorsCount: number;
+    enableDepthBuffer?: boolean;
+    depthTexture?: Texture;
+    colorsCount?: number;
 };
 
 export class WebGLRenderTarget {

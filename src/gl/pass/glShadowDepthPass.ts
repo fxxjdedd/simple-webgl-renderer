@@ -12,10 +12,15 @@ export class GL_ShadowDepthPass {
         const originRenderTarget = this.renderer.currentRenderTarget;
         for (const light of lights) {
             if (light.shadow.map == null) {
-                light.shadow.map = new WebGLRenderTarget(this.renderer.viewport.z, this.renderer.viewport.w);
+                light.shadow.map = new WebGLRenderTarget(this.renderer.viewport.z, this.renderer.viewport.w, {
+                    enableDepthBuffer: true, // must set true so that depth test could work
+                });
             }
             this.renderer.setRenderTarget(light.shadow.map);
-            this.renderer.gl.clear(this.renderer.clearBits);
+            const gl = this.renderer.gl;
+            gl.clearColor(1, 1, 1, 1); // set clear color to white so that shadow map always safe for non-recevie-shadow objects
+            gl.enable(gl.DEPTH_TEST);
+            this.renderer.clear();
 
             light.shadow.updateShadowCamera();
 

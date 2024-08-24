@@ -111,6 +111,19 @@ export const fragment = /* glsl */ `#version 300 es
 	uniform sampler2D dirLightShadowMap;
 	uniform mat4 dirLightShadowMatrix;
 
+	float shadowCompare(vec3 pos) {
+		vec4 posShadow = dirLightShadowMatrix * vec4(pos, 1.0);
+		vec3 posShadowNDC = posShadow.xyz / posShadow.w;
+		vec3 posShadowUV = posShadowNDC * 0.5 + 0.5;
+
+		float closestDepth = texture(dirLightShadowMap, posShadowUV.xy).r;
+		float currentDepth = posShadowUV.z;
+
+		float shadow = step(closestDepth, currentDepth);
+		return shadow;
+	}
+
+		
 
 
 	// pbr parameters
@@ -123,6 +136,7 @@ export const fragment = /* glsl */ `#version 300 es
 	uniform sampler2D g_depth;
 
 	out vec4 fragColor;
+	
 
 	void main() {
 		highp vec2 uv = (gl_FragCoord.xy - viewport.xy)/viewport.zw;
@@ -170,21 +184,8 @@ export const fragment = /* glsl */ `#version 300 es
 		vec3 Lo = Lo_Diffuse + Lo_Specular;
 
 
+		float shadowFactor = shadowCompare(pos);
 
-		vec4 posShadow = dirLightShadowMatrix * vec4(pos, 1.0);
-		vec3 posShadowNDC = posShadow.xyz / posShadow.w;
-		vec3 posShadowUV = posShadowNDC * 0.5 + 0.5;
-		vec4 colorShadow = texture(dirLightShadowMap, posShadowUV.xy);
-
-		// float texture2DCompare( sampler2D depths, vec2 uv, float compare ) {
-
-		// 	return step( compare, unpackRGBAToDepth( texture2D( depths, uv ) ) );
-
-		// }
-
-		
-
-		fragColor = vec4(Lo * colorShadow.y, 1.0);
-
+		fragColor = vec4(Lo * (1.0 - shadowFactor), 1.0);
 	}
 `;

@@ -191,7 +191,7 @@ class OrthoCamera extends Camera {
         public top = 1,
         public bottom = -1,
         public near = 0.1,
-        public far = 100
+        public far = 5
     ) {
         super();
         this.updateProjectionMatrix();

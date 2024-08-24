@@ -31,6 +31,7 @@ export const fragment = /* glsl */ `#version 300 es
     layout(location = 0) out vec4 depthMap;
 
 	void main() {
-        depthMap = vec4(0.0, gl_FragCoord.z, 0.0, 1.0);
+        // already 0-1
+        depthMap = vec4(vec3(gl_FragCoord.z), 1.0);
 	}
 `;

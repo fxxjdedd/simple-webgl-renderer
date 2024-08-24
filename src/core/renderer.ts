@@ -51,10 +51,6 @@ export class WebGLRenderer {
     }
 
     render(scene: Scene, camera: Camera) {
-        if (this.clearBits > 0) {
-            this.gl.clear(this.clearBits);
-        }
-
         this.renderState.clear();
 
         camera.updateMatrixWorld();
@@ -73,6 +69,9 @@ export class WebGLRenderer {
         }
 
         this.renderState.setup();
+
+        this.gl.clearColor(0, 0, 0, 1);
+        this.clear();
 
         for (const obj of scene.children) {
             if (obj instanceof Mesh) {
@@ -187,5 +186,9 @@ export class WebGLRenderer {
 
     setClearbits(bits) {
         this.clearBits = bits;
+    }
+
+    clear() {
+        if (this.clearBits > 0) this.gl.clear(this.clearBits);
     }
 }

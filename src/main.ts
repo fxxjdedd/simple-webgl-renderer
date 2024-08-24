@@ -59,6 +59,10 @@ const deferredMaterial = new DeferredMaterial();
 const geometryPassMesh = new Mesh(geometryPassGeometry, deferredMaterial);
 geometryPassMesh.castShadow = true;
 
+const geometryPassMesh2 = new Mesh(geometryPassGeometry, deferredMaterial);
+geometryPassMesh2.castShadow = true;
+geometryPassMesh2.position.x = 0.25;
+
 const diffuseMap = new TextureLoader().load("/textures/medieval_red_brick_1k/medieval_red_brick_diff_1k.jpg");
 const normalMap = new TextureLoader().load("/textures/medieval_red_brick_1k/medieval_red_brick_nor_gl_1k.png");
 const deferredMaterial4Plane = new DeferredMaterial();
@@ -95,7 +99,7 @@ pbrMaterial.uniforms = {
 
 const dirLight = new DirectionalLight();
 dirLight.castShadow = true;
-dirLight.position = new Vec3(5, 5, 5);
+dirLight.position = new Vec3(1, 1, 1);
 dirLight.target = geometryPassMesh;
 dirLight.color = new Vec3(1, 1, 1);
 dirLight.intensity = 6.0;
@@ -129,7 +133,7 @@ debugMaterial4.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
 /*                                   Scenes                                   */
 /* -------------------------------------------------------------------------- */
 
-const deferredScene = new Scene([geometryPassMesh, geometryPassMesh4Plane, dirLight]);
+const deferredScene = new Scene([geometryPassMesh, geometryPassMesh2, geometryPassMesh4Plane, dirLight]);
 const renderScene = new Scene([lightingPassMesh, dirLight]);
 
 const viewportScene1 = new Scene([debug1]);
@@ -143,6 +147,9 @@ const viewportScene4 = new Scene([debug4]);
 objLoader2.onLoad((obj) => {
     geometryPassMesh.scale.set([5, 5, 5]);
     geometryPassMesh.alignToBBox(obj.bbox, "bottom");
+
+    geometryPassMesh2.scale.set([5, 5, 5]);
+    geometryPassMesh2.alignToBBox(obj.bbox, "bottom");
 });
 
 /* -------------------------------------------------------------------------- */
@@ -155,6 +162,7 @@ function animate() {
     renderer.render(deferredScene, camera);
 
     renderer.setRenderTarget(null);
+    debugMaterial4.map = dirLight.shadow.map.texture;
 
     renderer.enableShadowPass = false;
 
