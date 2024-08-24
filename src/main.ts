@@ -65,6 +65,7 @@ const deferredMaterial4Plane = new DeferredMaterial();
 deferredMaterial4Plane.map = diffuseMap;
 deferredMaterial4Plane.normalMap = normalMap;
 const geometryPassMesh4Plane = new Mesh(groundPlane, deferredMaterial4Plane);
+// geometryPassMesh4Plane.castShadow = true;
 
 const depthTexture = new DepthTexture(gl);
 

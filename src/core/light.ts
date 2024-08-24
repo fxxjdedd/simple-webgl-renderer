@@ -1,4 +1,4 @@
-import { Mat4, Vec3, Vec4 } from "gl-matrix";
+import { Mat4, Vec2, Vec3, Vec4 } from "gl-matrix";
 import { Camera, Object3D, OrthoCamera } from "./core";
 import { WebGLRenderTarget } from "./renderTarget";
 import { retrivePosition } from "../util/matrix";
@@ -24,12 +24,20 @@ export class DirectionalLight extends Light {
 }
 
 export class LightShadow {
-    map: WebGLRenderTarget;
-    camera: Camera;
-    frustum: Frustum;
+    vpMatrix: Mat4;
+    camera: Camera = new OrthoCamera();
+    frustum: Frustum = new Frustum();
+    map: WebGLRenderTarget = null;
+    map2: WebGLRenderTarget = null;
+    bias = 0;
+    normalBias = 0;
+    radius = 1;
+    blurSamples = 8;
+    mapSize = new Vec2(512, 512);
     constructor(public light: Light) {
         this.camera = new OrthoCamera();
         this.frustum = new Frustum();
+        this.vpMatrix = new Mat4();
     }
 
     updateShadowCamera() {
@@ -39,7 +47,8 @@ export class LightShadow {
         this.camera.position.copy(posWorld);
         this.camera.lookAt(targetWorld.x, targetWorld.y, targetWorld.z);
 
-        const vpMatrix = Mat4.multiply(new Mat4(), this.camera.projectionMatrix, this.camera.matrixWorldInv);
-        this.frustum.setFromProjectionMatrix(vpMatrix);
+        Mat4.multiply(this.vpMatrix, this.camera.projectionMatrix, this.camera.matrixWorldInv);
+
+        this.frustum.setFromProjectionMatrix(this.vpMatrix);
     }
 }

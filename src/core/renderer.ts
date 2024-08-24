@@ -29,7 +29,16 @@ export class WebGLRenderer {
     enableShadowPass = false;
 
     constructor(public canvas: HTMLCanvasElement) {
-        const gl = (this.gl = canvas.getContext("webgl2"));
+        const gl = (this.gl = canvas.getContext("webgl2", {
+            depth: true,
+            stencil: false,
+            alpha: false,
+            antialias: false,
+            premultipliedAlpha: true,
+            preserveDrawingBuffer: false,
+            powerPreference: "default",
+            failIfMajorPerformanceCaveat: false,
+        }));
         this.programManager = new GL_ProgramManager(gl);
         this.state = new GL_State(gl);
         this.constantsMapping = new GL_ConstantsMapping(gl);
@@ -42,11 +51,6 @@ export class WebGLRenderer {
     }
 
     render(scene: Scene, camera: Camera) {
-        this.gl.clearColor(0, 0, 0, 1);
-        // NOTE: depth is not linear, see: https://learnopengl.com/Advanced-OpenGL/Depth-testing
-        this.gl.clearDepth(1);
-        this.gl.enable(this.gl.DEPTH_TEST);
-        this.gl.depthFunc(this.gl.LEQUAL);
         if (this.clearBits > 0) {
             this.gl.clear(this.clearBits);
         }
@@ -57,6 +61,7 @@ export class WebGLRenderer {
 
         for (const obj of scene.children) {
             if (obj instanceof Light) {
+                obj.updateMatrixWorld();
                 this.renderState.addLight(obj);
             }
         }
@@ -119,7 +124,11 @@ export class WebGLRenderer {
         program.setUniform("normalMatrix", object.normalMatrix);
         program.setUniform("viewport", this.viewport);
         if (this.renderState.hasLight) {
+            // TODO: multiple light
             program.setUniform("dirLight", this.renderState.lights.dirLights[0]);
+            program.setUniform("dirLightShadow", this.renderState.lights.dirLightShadows[0]);
+            program.setUniform("dirLightShadowMap", this.renderState.lights.dirLightShadowMaps[0], this.textures);
+            program.setUniform("dirLightShadowMatrix", this.renderState.lights.dirLightShadowMatrixs[0]);
         }
 
         for (const name in material.uniforms) {

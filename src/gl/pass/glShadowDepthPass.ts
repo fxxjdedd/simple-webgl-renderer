@@ -15,6 +15,7 @@ export class GL_ShadowDepthPass {
                 light.shadow.map = new WebGLRenderTarget(this.renderer.viewport.z, this.renderer.viewport.w);
             }
             this.renderer.setRenderTarget(light.shadow.map);
+            this.renderer.gl.clear(this.renderer.clearBits);
 
             light.shadow.updateShadowCamera();
 
@@ -27,6 +28,7 @@ export class GL_ShadowDepthPass {
         if (object.castShadow) {
             if (object instanceof Mesh) {
                 Mat4.multiply(object.mvMatrix, shadowCamera.matrixWorldInv, object.matrixWorld);
+                // TODO: cache depthMaterial
                 const depthMaterial = new DepthMaterial();
                 this.renderer.renderObject(object, object.geometry, depthMaterial, shadowCamera);
             }

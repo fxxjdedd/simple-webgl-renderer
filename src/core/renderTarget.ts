@@ -12,6 +12,10 @@ export class WebGLRenderTarget {
     framebuffer: GL_FrameBuffer;
     textures: Texture[] = [];
 
+    get texture() {
+        return this.textures[0];
+    }
+
     get depthTexture() {
         return this.framebuffer.depthTexture;
     }
