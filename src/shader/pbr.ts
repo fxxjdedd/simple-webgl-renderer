@@ -117,7 +117,8 @@ export const fragment = /* glsl */ `#version 300 es
 		vec3 posShadowUV = posShadowNDC * 0.5 + 0.5;
 
 		float closestDepth = texture(dirLightShadowMap, posShadowUV.xy).r;
-		float currentDepth = posShadowUV.z;
+		// float currentDepth = posShadowUV.z + dirLightShadow.shadowBias;
+		float currentDepth = posShadowUV.z - 0.005;
 
 		float shadow = step(closestDepth, currentDepth);
 		return shadow;
@@ -183,8 +184,8 @@ export const fragment = /* glsl */ `#version 300 es
 		vec3 Lo_Specular = outLight.specularColor + outLight.indirectSpecular; 
 		vec3 Lo = Lo_Diffuse + Lo_Specular;
 
-
-		float shadowFactor = shadowCompare(pos);
+		vec3 shadowWorldPos = pos + normal * dirLightShadow.shadowNormalBias;
+		float shadowFactor = shadowCompare(shadowWorldPos);
 
 		fragColor = vec4(Lo * (1.0 - shadowFactor), 1.0);
 	}

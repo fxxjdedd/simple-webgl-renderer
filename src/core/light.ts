@@ -29,7 +29,7 @@ export class LightShadow {
     frustum: Frustum = new Frustum();
     map: WebGLRenderTarget = null;
     map2: WebGLRenderTarget = null;
-    bias = 0;
+    bias = -0.005;
     normalBias = 0;
     radius = 1;
     blurSamples = 8;

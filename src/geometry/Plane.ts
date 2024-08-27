@@ -42,7 +42,7 @@ export class Plane extends Geometry<typeof planeLayout> {
             1, 1,
             0, 1,
         ]);
-
-        this.setIndex([0, 1, 2, 0, 2, 3]);
+        // must counter-clockwise
+        this.setIndex([0, 2, 1, 0, 3, 2]);
     }
 }

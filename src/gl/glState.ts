@@ -9,6 +9,7 @@ export class GL_State {
         this.gl.clearDepth(1);
         this.gl.enable(this.gl.DEPTH_TEST);
         this.gl.depthFunc(this.gl.LEQUAL);
+        this.gl.enable(this.gl.CULL_FACE);
     }
 
     bindTexture(unit: number, texture: WebGLTexture) {
