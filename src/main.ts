@@ -133,7 +133,7 @@ debugMaterial4.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
 /*                                   Scenes                                   */
 /* -------------------------------------------------------------------------- */
 
-const deferredScene = new Scene([geometryPassMesh, geometryPassMesh2, geometryPassMesh4Plane, dirLight]);
+const deferredScene = new Scene([geometryPassMesh, geometryPassMesh4Plane, dirLight]);
 const renderScene = new Scene([lightingPassMesh, dirLight]);
 
 const viewportScene1 = new Scene([debug1]);
@@ -162,7 +162,7 @@ function animate() {
     renderer.render(deferredScene, camera);
 
     renderer.setRenderTarget(null);
-    debugMaterial4.map = dirLight.shadow.map.depthTexture;
+    debugMaterial4.map = dirLight.shadow.map.texture;
 
     renderer.enableShadowPass = false;
 

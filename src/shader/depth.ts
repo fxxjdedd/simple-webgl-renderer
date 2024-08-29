@@ -12,6 +12,7 @@ export const vertex = /* glsl */ `#version 300 es
 
     out vec3 v_pos;
     out float v_depth;
+    out vec2 v_fragZW;
 
 	void main() {
 		vec4 worldPos = modelMatrix * vec4(position, 1.0);
@@ -21,6 +22,7 @@ export const vertex = /* glsl */ `#version 300 es
         gl_Position = vec4(uv, 1.0, 1.0);
 		gl_Position = projMatrix * mvMatrix * vec4(position, 1.0);
         v_depth = 1.0 + gl_Position.w; // w is -eye.z
+        v_fragZW = gl_Position.zw;
 	}
 `;
 
@@ -30,14 +32,17 @@ export const fragment = /* glsl */ `#version 300 es
 
     in vec3 v_pos;
     in float v_depth;
+    in vec2 v_fragZW;
 
     uniform float logDepthFactor;
 
-    layout(location = 0) out vec4 useless; // cause renderTarget must have at least one color texture
+    layout(location = 0) out vec4 depthColor; // cause renderTarget must have at least one color texture
 
 	void main() {
         gl_FragDepth = log2(v_depth) * logDepthFactor * 0.5;
-        gl_FragDepth = 0.0;
-        useless = vec4(1.0);
+        // float depth = 0.5 * v_fragZW.x / v_fragZW.y + 0.5; // from three.js
+        // depth = (depth + 1.0) / 2.0;
+        float depth = gl_FragCoord.z;
+        depthColor = vec4(vec3(depth), 1.0);
 	}
 `;

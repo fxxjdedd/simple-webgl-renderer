@@ -83,9 +83,10 @@ class Object3D {
 
     updateMatrix() {
         const mat = Mat4.create();
+        this.matrix = mat;
+
         // scale
         Mat4.scale(mat, mat, this.scale);
-        this.matrix = mat;
         // postion
         Mat4.translate(mat, mat, this.position);
         // rotation
