@@ -4,6 +4,7 @@ import { Light } from "../../core/light";
 import { WebGLRenderTarget } from "../../core/renderTarget";
 import { WebGLRenderer } from "../../core/renderer";
 import { DepthMaterial } from "../../materials";
+import { DepthTexture } from "../../textures/depthTexture";
 
 export class GL_ShadowDepthPass {
     constructor(private renderer: WebGLRenderer) {}
@@ -14,6 +15,7 @@ export class GL_ShadowDepthPass {
             if (light.shadow.map == null) {
                 light.shadow.map = new WebGLRenderTarget(this.renderer.viewport.z, this.renderer.viewport.w, {
                     enableDepthBuffer: true, // must set true so that depth test could work
+                    depthTexture: new DepthTexture(this.renderer.gl),
                 });
             }
             this.renderer.setRenderTarget(light.shadow.map);

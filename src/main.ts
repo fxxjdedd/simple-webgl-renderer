@@ -70,6 +70,7 @@ deferredMaterial4Plane.map = diffuseMap;
 deferredMaterial4Plane.normalMap = normalMap;
 const geometryPassMesh4Plane = new Mesh(groundPlane, deferredMaterial4Plane);
 geometryPassMesh4Plane.receiveShadow = true;
+geometryPassMesh4Plane.scale.set([5, 5, 5]);
 
 const depthTexture = new DepthTexture(gl);
 
@@ -120,7 +121,6 @@ const debug4 = new Mesh(screenPlane, debugMaterial4);
 const adaptiveAspectRatio = getAdaptiveAspectRatio(renderTarget.width, renderTarget.height);
 
 debugMaterial1.map = renderTarget.textures[0];
-
 debugMaterial1.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
 debugMaterial2.map = renderTarget.textures[1];
 debugMaterial2.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
@@ -162,7 +162,7 @@ function animate() {
     renderer.render(deferredScene, camera);
 
     renderer.setRenderTarget(null);
-    debugMaterial4.map = dirLight.shadow.map.texture;
+    debugMaterial4.map = dirLight.shadow.map.depthTexture;
 
     renderer.enableShadowPass = false;
 

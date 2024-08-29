@@ -35,7 +35,7 @@ export class LightShadow {
     blurSamples = 8;
     mapSize = new Vec2(512, 512);
     constructor(public light: Light) {
-        this.camera = new OrthoCamera();
+        this.camera = new OrthoCamera(-5, 5, 5, -5, 0.1, 50);
         this.frustum = new Frustum();
         this.vpMatrix = new Mat4();
     }

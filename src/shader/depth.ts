@@ -11,6 +11,7 @@ export const vertex = /* glsl */ `#version 300 es
 	uniform mat4 modelMatrix;
 
     out vec3 v_pos;
+    out float v_depth;
 
 	void main() {
 		vec4 worldPos = modelMatrix * vec4(position, 1.0);
@@ -19,6 +20,7 @@ export const vertex = /* glsl */ `#version 300 es
         gl_Position = vec4(normal, 1.0);
         gl_Position = vec4(uv, 1.0, 1.0);
 		gl_Position = projMatrix * mvMatrix * vec4(position, 1.0);
+        v_depth = 1.0 + gl_Position.w; // w is -eye.z
 	}
 `;
 
@@ -27,11 +29,15 @@ export const fragment = /* glsl */ `#version 300 es
 	#pragma vscode_glsllint_stage : frag //pragma to set STAGE to 'frag'
 
     in vec3 v_pos;
+    in float v_depth;
 
-    layout(location = 0) out vec4 depthMap;
+    uniform float logDepthFactor;
+
+    layout(location = 0) out vec4 useless; // cause renderTarget must have at least one color texture
 
 	void main() {
-        // already 0-1
-        depthMap = vec4(vec3(gl_FragCoord.z), 1.0);
+        gl_FragDepth = log2(v_depth) * logDepthFactor * 0.5;
+        gl_FragDepth = 0.0;
+        useless = vec4(1.0);
 	}
 `;

@@ -143,6 +143,8 @@ class Scene extends Object3D {
 }
 
 abstract class Camera extends Object3D {
+    near: number;
+    far: number;
     projectionMatrix: Mat4;
     target: Vec3;
     constructor() {
