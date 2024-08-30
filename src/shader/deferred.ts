@@ -46,6 +46,7 @@ export const fragment = /* glsl */ `#version 300 es
 	uniform vec4 diffuse;
 
 	uniform mat4 viewMatrix;
+	uniform mat4 projMatrix;
 
 	vec3 UnpackNormal(sampler2D normalMap, vec2 uv, vec3 surfPosInEye, vec3 surfNormal) {
 		vec3 nColor = texture(normalMap, uv).xyz;
@@ -66,6 +67,7 @@ export const fragment = /* glsl */ `#version 300 es
 	void main() {
 
 		vec4 posInEye = viewMatrix * vec4(v_pos, 1.0);
+
 		// NOTE: here we use v_uv to sample from normal texture
 #ifdef USE_NORMAL_MAP
 		vec3 mapNormal = UnpackNormal(normalMap, v_uv, -posInEye.xyz, v_normal);
@@ -80,6 +82,6 @@ export const fragment = /* glsl */ `#version 300 es
 #else
 		g_diffuse = diffuse;
 #endif
-		g_pos = vec4((v_pos + 1.0) / 2.0, 1.0);
+		g_pos = vec4(vec3(gl_FragCoord.z), 1.0);
 	}
 `;

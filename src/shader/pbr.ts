@@ -97,7 +97,9 @@ export const fragment = /* glsl */ `#version 300 es
 
 
 	uniform mat4 projMatrix;
+	uniform mat4 viewMatrix;
 	uniform mat4 mvMatrix;
+	uniform mat4 modelMatrix;
 	uniform vec4 viewport;
 
 	uniform DirLight dirLight;
@@ -113,18 +115,25 @@ export const fragment = /* glsl */ `#version 300 es
 
 	float shadowCompare(vec3 pos) {
 		vec4 posShadow = dirLightShadowMatrix * vec4(pos, 1.0);
+
 		vec3 posShadowNDC = posShadow.xyz / posShadow.w;
-		vec3 posShadowUV = posShadowNDC * 0.5 + 0.5;
+		vec3 posShadowUV = (posShadowNDC + 1.0) / 2.0;
+		// vec3 posShadowUV = posShadowNDC*0.5 + 0.5;
+
+		// if (posShadowUV.x > 1.0 || posShadowUV.y > 1.0){
+		// 	return vec3(1.0, 0.0, 0.0);	
+		// }
+
+		// if ( posShadowUV.x < 0.0 || posShadowUV.y < 0.0 ) {
+		// 	return vec3(0.0, 1.0, 0.0);
+		// }
 
 		float closestDepth = texture(dirLightShadowMap, posShadowUV.xy).r;
-		// float currentDepth = posShadowUV.z + dirLightShadow.shadowBias;
-		float currentDepth = posShadowUV.z - 0.005;
+		float currentDepth = posShadowUV.z + dirLightShadow.shadowBias;
 
 		float shadow = step(closestDepth, currentDepth);
 		return shadow;
 	}
-
-		
 
 
 	// pbr parameters
@@ -144,7 +153,11 @@ export const fragment = /* glsl */ `#version 300 es
 
 		vec3 diffuse = texture(g_diffuse, uv).xyz;
 		vec3 normal = texture(g_normal, uv).xyz * 2.0 - 1.0;
-		vec3 pos = texture(g_pos, uv).xyz * 2.0 - 1.0;
+		float depth = texture(g_depth, uv).r;
+
+		vec3 ndc = vec3(uv, depth) * 2.0 - 1.0;
+		vec4 posHomo = (inverse(projMatrix * viewMatrix) * vec4(ndc, 1.0));
+		vec3 pos = (posHomo/posHomo.w).xyz;
 
 		vec3 L = dirLight.direction;
 		vec3 N = normal;
@@ -185,8 +198,14 @@ export const fragment = /* glsl */ `#version 300 es
 		vec3 Lo = Lo_Diffuse + Lo_Specular;
 
 		vec3 shadowWorldPos = pos + normal * dirLightShadow.shadowNormalBias;
+		// vec3 shadowWorldPos = pos;
 		float shadowFactor = shadowCompare(shadowWorldPos);
+		// vec3 shadowFactor = shadowCompare(shadowWorldPos);
 
 		fragColor = vec4(Lo * (1.0 - shadowFactor), 1.0);
+		// fragColor = vec4(Lo, 1.0);
+		// fragColor = vec4(vec3(shadowFactor.z), 1.0);
+
+		// fragColor = vec4(vec3(shadowFactor), 1.0);
 	}
 `;

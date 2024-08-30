@@ -35,7 +35,7 @@ export class LightShadow {
     blurSamples = 8;
     mapSize = new Vec2(512, 512);
     constructor(public light: Light) {
-        this.camera = new OrthoCamera(-5, 5, 5, -5, 0.1, 5);
+        this.camera = new OrthoCamera(-0.5, 0.5, 0.5, -0.5, 8.5, 9);
         this.frustum = new Frustum();
         this.vpMatrix = new Mat4();
     }
@@ -43,8 +43,6 @@ export class LightShadow {
     updateShadowCamera() {
         const posWorld = new Vec3(...retrivePosition(this.light.matrixWorld));
         const targetWorld = new Vec3(...retrivePosition(this.light.target.matrixWorld));
-        console.log("########", targetWorld);
-
         this.camera.position.copy(posWorld);
         this.camera.lookAt(targetWorld.x, targetWorld.y, targetWorld.z);
 

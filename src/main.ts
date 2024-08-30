@@ -57,6 +57,7 @@ orbitControl.setupEventListeners();
 
 const deferredMaterial = new DeferredMaterial();
 const geometryPassMesh = new Mesh(geometryPassGeometry, deferredMaterial);
+// geometryPassMesh.position.x = 0.2;
 geometryPassMesh.castShadow = true;
 
 const geometryPassMesh2 = new Mesh(geometryPassGeometry, deferredMaterial);
@@ -70,7 +71,8 @@ deferredMaterial4Plane.map = diffuseMap;
 deferredMaterial4Plane.normalMap = normalMap;
 const geometryPassMesh4Plane = new Mesh(groundPlane, deferredMaterial4Plane);
 geometryPassMesh4Plane.receiveShadow = true;
-geometryPassMesh4Plane.scale.set([5, 5, 5]);
+// const scale = 2;
+// geometryPassMesh4Plane.scale.set(Array(3).fill(scale));
 
 const depthTexture = new DepthTexture(gl);
 
@@ -100,10 +102,10 @@ pbrMaterial.uniforms = {
 
 const dirLight = new DirectionalLight();
 dirLight.castShadow = true;
-dirLight.position = new Vec3(1, 1, 1);
-dirLight.target = geometryPassMesh;
+dirLight.position = new Vec3(5, 5, 5);
+dirLight.target = geometryPassMesh4Plane;
 dirLight.color = new Vec3(1, 1, 1);
-dirLight.intensity = 6.0;
+dirLight.intensity = 1.0;
 
 /* -------------------------------------------------------------------------- */
 /*                           DeferredDebugMaterials                           */
@@ -145,10 +147,10 @@ const viewportScene4 = new Scene([debug4]);
 /*                               event handlers                               */
 /* -------------------------------------------------------------------------- */
 objLoader2.onLoad((obj) => {
-    geometryPassMesh.scale.set([5, 5, 5]);
+    // const scale = 5;
+    // geometryPassMesh.scale.set([scale, scale, scale]);
     geometryPassMesh.alignToBBox(obj.bbox, "bottom");
-
-    geometryPassMesh2.scale.set([5, 5, 5]);
+    // geometryPassMesh2.scale.set([scale, scale, scale]);
     geometryPassMesh2.alignToBBox(obj.bbox, "bottom");
 });
 
