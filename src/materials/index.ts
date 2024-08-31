@@ -34,3 +34,11 @@ export class PBRMaterial extends Material {
         super("PBRMaterial");
     }
 }
+
+export class DepthMaterial extends Material {
+    // TODO:
+    // static name = "DepthMaterial";
+    constructor() {
+        super("DepthMaterial");
+    }
+}

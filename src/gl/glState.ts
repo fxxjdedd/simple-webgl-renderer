@@ -1,11 +1,16 @@
 import { WebGLRenderTarget } from "../core/renderTarget";
-import { Texture } from "../core/texture";
 import { GL_FrameBuffer } from "./glFrameBuffer";
-import { GL_Textures } from "./glTextures";
 
 // only change webgl state here
 export class GL_State {
-    constructor(private gl: WebGL2RenderingContext) {}
+    constructor(private gl: WebGL2RenderingContext) {
+        this.gl.clearColor(0, 0, 0, 1);
+        // NOTE: depth is not linear, see: https://learnopengl.com/Advanced-OpenGL/Depth-testing
+        this.gl.clearDepth(1);
+        this.gl.enable(this.gl.DEPTH_TEST);
+        this.gl.depthFunc(this.gl.LEQUAL);
+        this.gl.enable(this.gl.CULL_FACE);
+    }
 
     bindTexture(unit: number, texture: WebGLTexture) {
         const gl = this.gl;

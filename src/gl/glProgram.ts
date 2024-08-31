@@ -12,14 +12,16 @@ export class GL_Program {
     program: globalThis.WebGLProgram;
     attributes: Record<string, { type: number; location: number; locationSize: number }>;
     uniforms: GL_Uniforms;
+    vertexShader: string;
+    fragmentShader: string;
 
     constructor(private gl: WebGL2RenderingContext, shader: Shader, defines: Record<string, any> = {}) {
         const program = gl.createProgram();
         this.program = program;
 
         const vs = gl.createShader(gl.VERTEX_SHADER);
-        const vertShader = this.prefixVertShader(defines, shader.vertex);
-        gl.shaderSource(vs, vertShader);
+        this.vertexShader = this.prefixVertShader(defines, shader.vertex);
+        gl.shaderSource(vs, this.vertexShader);
         gl.compileShader(vs);
 
         if (!gl.getShaderParameter(vs, gl.COMPILE_STATUS)) {
@@ -27,8 +29,8 @@ export class GL_Program {
         }
 
         const fs = gl.createShader(gl.FRAGMENT_SHADER);
-        const fragShader = this.prefixVertShader(defines, shader.fragment);
-        gl.shaderSource(fs, fragShader);
+        this.fragmentShader = this.prefixVertShader(defines, shader.fragment);
+        gl.shaderSource(fs, this.fragmentShader);
         gl.compileShader(fs);
 
         if (!gl.getShaderParameter(fs, gl.COMPILE_STATUS)) {

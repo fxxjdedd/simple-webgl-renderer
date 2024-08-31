@@ -1,3 +1,5 @@
+import packing from "./chunks/packing";
+
 export const vertex = /* glsl */ `#version 300 es
 	precision highp float;
 	#pragma vscode_glsllint_stage : vert //pragma to set STAGE to 'vert'
@@ -97,28 +99,64 @@ export const fragment = /* glsl */ `#version 300 es
 
 
 	uniform mat4 projMatrix;
+	uniform mat4 viewMatrix;
 	uniform mat4 mvMatrix;
+	uniform mat4 modelMatrix;
 	uniform vec4 viewport;
 
 	uniform DirLight dirLight;
+	struct DirLightShadow {
+		float shadowBias;
+		float shadowNormalBias;
+		float shadowRadius;
+		vec2 shadowMapSize;
+	};
+	uniform DirLightShadow dirLightShadow;
+	uniform sampler2D dirLightShadowMap;
+	uniform mat4 dirLightShadowMatrix;
+
+	${packing}
+
+	float shadowCompare(vec3 pos) {
+		vec4 posShadow = dirLightShadowMatrix * vec4(pos, 1.0);
+
+		vec3 posShadowNDC = posShadow.xyz / posShadow.w;
+		vec3 posShadowUV = (posShadowNDC + 1.0) / 2.0;
+		// vec3 posShadowUV = posShadowNDC*0.5 + 0.5;
+
+		if (posShadowUV.x > 1.0 || posShadowUV.y > 1.0 || posShadowUV.x < 0.0 || posShadowUV.y < 0.0){
+			return 1.0;
+		}
+
+		float posDepth = posShadowUV.z + dirLightShadow.shadowBias;
+		float texDepth = unpackRGBAToDepth( texture( dirLightShadowMap, posShadowUV.xy ) );
+		float shadow = step(posDepth, texDepth);
+
+		return shadow;
+	}
+
+
 	// pbr parameters
 	uniform float metalness;
 	uniform float roughness;
 
-	uniform sampler2D g_pos;
 	uniform sampler2D g_diffuse;
 	uniform sampler2D g_normal;
 	uniform sampler2D g_depth;
 
 	out vec4 fragColor;
-
+	
 
 	void main() {
 		highp vec2 uv = (gl_FragCoord.xy - viewport.xy)/viewport.zw;
 
 		vec3 diffuse = texture(g_diffuse, uv).xyz;
 		vec3 normal = texture(g_normal, uv).xyz * 2.0 - 1.0;
-		vec3 pos = texture(g_pos, uv).xyz * 2.0 - 1.0;
+		float depth = texture(g_depth, uv).r;
+
+		vec3 ndc = vec3(uv, depth) * 2.0 - 1.0;
+		vec4 posHomo = (inverse(projMatrix * viewMatrix) * vec4(ndc, 1.0));
+		vec3 pos = (posHomo/posHomo.w).xyz;
 
 		vec3 L = dirLight.direction;
 		vec3 N = normal;
@@ -141,7 +179,14 @@ export const fragment = /* glsl */ `#version 300 es
 		vec3 Wi = dirLight.direction;
 		vec3 Wo = inverse(mvMatrix)[3].xyz - pos;
 		float dtLN = clamp(dot(normal, normalize(dirLight.direction)), 0.0, 1.0);
-		vec3 Li = dtLN * dirLight.color; // radiance
+
+		vec3 shadowWorldPos = pos + normal * dirLightShadow.shadowNormalBias;
+		float shadowFactor = shadowCompare(shadowWorldPos);
+
+		vec3 directLightColor = dirLight.color * shadowFactor;
+		float directLightIntensity = dirLight.intensity;
+
+		vec3 Li = dtLN * directLightColor * directLightIntensity; // radiance
 
 		// direct lighting
 		outLight.diffuseColor += Li * BRDF_DiffusePart(pbrMaterial.diffuseColor);
@@ -152,7 +197,6 @@ export const fragment = /* glsl */ `#version 300 es
 		vec3 irradiance = ambient;
 
 		outLight.indirectDiffuse = irradiance * BRDF_DiffusePart(pbrMaterial.diffuseColor);
-
 
 		vec3 Lo_Diffuse = outLight.diffuseColor + outLight.indirectDiffuse;
 		vec3 Lo_Specular = outLight.specularColor + outLight.indirectSpecular; 

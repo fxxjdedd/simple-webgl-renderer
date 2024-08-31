@@ -14,6 +14,10 @@ export class GL_RenderState {
         this.lightObjects.push(light);
     }
 
+    getLights() {
+        return this.lightObjects;
+    }
+
     setup() {
         this.lights.setupLights(this.lightObjects);
     }

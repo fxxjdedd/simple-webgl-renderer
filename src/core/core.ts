@@ -1,6 +1,6 @@
-import { Vec3, Mat3, Mat4, Quat } from "gl-matrix";
+import { Vec3, Mat3, Mat4, Quat, Vec4 } from "gl-matrix";
 import { BufferLayout, StructuredData, TypedArrayCode } from "../util";
-import { DEG2RAD } from "../math/math";
+import { DEG2RAD } from "../util/math";
 import { Texture } from "./texture";
 import { calcBBox } from "../util/boundary";
 import { ObjectSpaceNormalMap } from "../constants";
@@ -26,7 +26,9 @@ class Material {
         return this._normalMap;
     }
 
-    uniforms: Record<string, any> = {};
+    uniforms: Record<string, any> = {
+        diffuse: new Vec4(1, 1, 1, 1),
+    };
     constructor(public name: string) {}
 }
 class Geometry<T extends BufferLayout = BufferLayout> {
@@ -46,6 +48,7 @@ class Geometry<T extends BufferLayout = BufferLayout> {
         this.attributes[name] = attrBuffer;
     }
 }
+
 class Object3D {
     parent: Object3D;
     matrix: Mat4;
@@ -59,6 +62,11 @@ class Object3D {
 
     mvMatrix: Mat4;
     normalMatrix: Mat3;
+
+    children: Object3D[] = [];
+
+    castShadow = false;
+    receiveShadow = false;
     constructor() {
         this.matrix = Mat4.create();
         this.matrixWorld = Mat4.create();
@@ -75,9 +83,10 @@ class Object3D {
 
     updateMatrix() {
         const mat = Mat4.create();
+        this.matrix = mat;
+
         // scale
         Mat4.scale(mat, mat, this.scale);
-        this.matrix = mat;
         // postion
         Mat4.translate(mat, mat, this.position);
         // rotation
@@ -104,38 +113,39 @@ class Mesh extends Object3D {
         super();
     }
 
-    alignToBBoxCenter(bbox?: [Vec3, Vec3]) {
+    alignToBBox(bbox?: [Vec3, Vec3], align: "center" | "bottom" | "top" = "center") {
         bbox = bbox || this.geometry.bbox;
         if (bbox != null) {
             const center = new Vec3(
-                bbox[0][0] + (bbox[1][0] - bbox[0][0]) / 2,
-                bbox[0][1] + (bbox[1][1] - bbox[0][1]) / 2,
-                bbox[0][2] + (bbox[1][2] - bbox[0][2]) / 2
+                bbox[0].x + (bbox[1].x - bbox[0].x) / 2,
+                0,
+                bbox[0].z + (bbox[1].z - bbox[0].z) / 2
             );
+            if (align === "center") {
+                center.y = bbox[0].y + (bbox[1].y - bbox[0].y) / 2;
+            } else if (align === "bottom") {
+                center.y = bbox[0].y;
+            } else if (align === "top") {
+                center.y = bbox[1].y;
+            }
 
             this.position = this.position.sub(center);
-
-            // const mv = new Mat4().translate(new Vec3(-center[0], -center[1], -center[2]));
-            // Mat4.multiply(this.matrixWorld, mv, this.matrixWorld);
-            // Mat4.invert(this.matrixWorldInv, this.matrixWorld);
-            // // this.matrix[4 * 3] -= center[0];
-            // // this.matrix[4 * 3 + 1] -= center[1];
-            // // this.matrix[4 * 3 + 1] -= center[2];
         }
     }
 }
 
 class Scene extends Object3D {
-    objects: Object3D[] = [];
     constructor(objects?: Object3D[]) {
         super();
         if (objects) {
-            this.objects = objects;
+            this.children.push(...objects);
         }
     }
 }
 
-class Camera extends Object3D {
+abstract class Camera extends Object3D {
+    near: number;
+    far: number;
     projectionMatrix: Mat4;
     target: Vec3;
     constructor() {
@@ -155,9 +165,11 @@ class Camera extends Object3D {
         Quat.fromMat3(this.quaterion, lookAtRotationMat3);
         this.updateMatrixWorld();
     }
+
+    abstract updateProjectionMatrix(): void;
 }
 class PerspectiveCamera extends Camera {
-    public zoom = 0.001;
+    public zoom = 1;
     constructor(public fov = 60, public aspect = 1, public near = 0.1, public far = 100) {
         super();
         this.updateProjectionMatrix();
@@ -173,4 +185,34 @@ class PerspectiveCamera extends Camera {
         Mat4.perspectiveNO(this.projectionMatrix, zoomedFov, zoomedAspect, this.near, this.far);
     }
 }
-export { Material, Geometry, Object3D, Mesh, Scene, Camera, PerspectiveCamera };
+
+class OrthoCamera extends Camera {
+    public zoom = 1;
+    constructor(
+        public left = -1,
+        public right = 1,
+        public top = 1,
+        public bottom = -1,
+        public near = 0.1,
+        public far = 5
+    ) {
+        super();
+        this.updateProjectionMatrix();
+    }
+
+    updateProjectionMatrix() {
+        const centerX = this.left + (this.right - this.left) / 2.0;
+        const centerY = this.bottom + (this.top - this.bottom) / 2.0;
+
+        const offsetX = (this.right - this.left) / 2.0 / this.zoom;
+        const offsetY = (this.top - this.bottom) / 2.0 / this.zoom;
+
+        const left = centerX - offsetX;
+        const right = centerX + offsetX;
+        const bottom = centerY - offsetY;
+        const top = centerY + offsetY;
+
+        Mat4.orthoNO(this.projectionMatrix, left, right, bottom, top, this.near, this.far);
+    }
+}
+export { Material, Geometry, Object3D, Mesh, Scene, Camera, PerspectiveCamera, OrthoCamera };

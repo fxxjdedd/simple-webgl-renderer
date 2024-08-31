@@ -1,5 +1,5 @@
 import { OrbitControl } from "./control/OrbitControl";
-import { Geometry, Mesh, PerspectiveCamera, Scene } from "./core/core";
+import { Geometry, Mesh, OrthoCamera, PerspectiveCamera, Scene } from "./core/core";
 import { BoxGeometry } from "./geometry/BoxGeometry";
 import { WebGLRenderer } from "./core/renderer";
 import { WebGLRenderTarget } from "./core/renderTarget";
@@ -11,6 +11,7 @@ import { TextureLoader } from "./loader/TextureLoader";
 import { OBJLoader } from "./loader/OBJLoader";
 import { ScreenPlane } from "./geometry/ScreenPlane";
 import { getAdaptiveAspectRatio } from "./util/texture";
+import { Plane } from "./geometry/Plane";
 const canvas = document.getElementById("webglcanvas") as HTMLCanvasElement;
 const renderer = new WebGLRenderer(canvas);
 const gl = renderer.gl;
@@ -26,6 +27,7 @@ const bunny = objLoader2.load("/3d-models/stanford-bunny.obj");
 
 const geometryPassGeometry = bunny;
 const screenPlane = new ScreenPlane();
+const groundPlane = new Plane();
 
 // let box = new BoxGeometry(2, 2, 2);
 // box = bunny;
@@ -36,7 +38,8 @@ const screenPlane = new ScreenPlane();
 /* -------------------------------------------------------------------------- */
 
 const camera = new PerspectiveCamera(60, canvas.width / canvas.height, 0.1, 10);
-camera.position.x = 0;
+// const camera = new OrthoCamera(-5, 5, 5, -5, 0.05, 500);
+camera.position.x = 1;
 camera.position.y = 0.5;
 camera.position.z = 1;
 camera.lookAt(0, 0, 0);
@@ -52,14 +55,19 @@ orbitControl.setupEventListeners();
 /*                              DeferredMaterials                             */
 /* -------------------------------------------------------------------------- */
 
+const deferredMaterial = new DeferredMaterial();
+const geometryPassMesh = new Mesh(geometryPassGeometry, deferredMaterial);
+geometryPassMesh.castShadow = true;
+
 const diffuseMap = new TextureLoader().load("/textures/medieval_red_brick_1k/medieval_red_brick_diff_1k.jpg");
 const normalMap = new TextureLoader().load("/textures/medieval_red_brick_1k/medieval_red_brick_nor_gl_1k.png");
-const deferredMaterial = new DeferredMaterial();
-deferredMaterial.map = diffuseMap;
-// deferredMaterial.normalMap = normalMap;
-deferredMaterial.uniforms.diffuse = new Vec4(1, 1, 1, 1.0);
-
-const geometryPassMesh = new Mesh(geometryPassGeometry, deferredMaterial);
+const deferredMaterial4Plane = new DeferredMaterial();
+deferredMaterial4Plane.map = diffuseMap;
+deferredMaterial4Plane.normalMap = normalMap;
+const geometryPassMesh4Plane = new Mesh(groundPlane, deferredMaterial4Plane);
+geometryPassMesh4Plane.receiveShadow = true;
+const scale = 2;
+geometryPassMesh4Plane.scale.set(Array(3).fill(scale));
 
 const depthTexture = new DepthTexture(gl);
 
@@ -69,7 +77,7 @@ const renderTarget = new WebGLRenderTarget(
     {
         enableDepthBuffer: true,
         depthTexture: depthTexture,
-        colorsCount: 3,
+        colorsCount: 2,
     }
 );
 
@@ -81,16 +89,18 @@ const lightingPassMesh = new Mesh(screenPlane, pbrMaterial);
 pbrMaterial.uniforms = {
     g_diffuse: renderTarget.textures[0],
     g_normal: renderTarget.textures[1],
-    g_pos: renderTarget.textures[2],
     g_depth: depthTexture,
     metalness: 0.0,
     roughness: 1.0,
 };
 
 const dirLight = new DirectionalLight();
+dirLight.castShadow = true;
 dirLight.position = new Vec3(5, 5, 5);
-dirLight.target = geometryPassMesh;
+dirLight.target = geometryPassMesh4Plane;
 dirLight.color = new Vec3(1, 1, 1);
+dirLight.intensity = 3.0;
+dirLight.shadow.bias = -0.00005;
 
 /* -------------------------------------------------------------------------- */
 /*                           DeferredDebugMaterials                           */
@@ -108,11 +118,10 @@ const debug4 = new Mesh(screenPlane, debugMaterial4);
 const adaptiveAspectRatio = getAdaptiveAspectRatio(renderTarget.width, renderTarget.height);
 
 debugMaterial1.map = renderTarget.textures[0];
-
 debugMaterial1.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
 debugMaterial2.map = renderTarget.textures[1];
 debugMaterial2.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
-debugMaterial3.map = renderTarget.textures[2];
+// debugMaterial3.map = dirLight.shadow.map.texture;
 debugMaterial3.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
 debugMaterial4.map = depthTexture;
 debugMaterial4.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
@@ -121,31 +130,37 @@ debugMaterial4.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
 /*                                   Scenes                                   */
 /* -------------------------------------------------------------------------- */
 
-const deferredScene = new Scene([geometryPassMesh]);
+const deferredScene = new Scene([geometryPassMesh, geometryPassMesh4Plane, dirLight]);
+const renderScene = new Scene([lightingPassMesh, dirLight]);
 
 const viewportScene1 = new Scene([debug1]);
 const viewportScene2 = new Scene([debug2]);
 const viewportScene3 = new Scene([debug3]);
 const viewportScene4 = new Scene([debug4]);
 
-const renderScene = new Scene([lightingPassMesh, dirLight]);
-
 /* -------------------------------------------------------------------------- */
 /*                               event handlers                               */
 /* -------------------------------------------------------------------------- */
 objLoader2.onLoad((obj) => {
-    geometryPassMesh.scale.set([10, 10, 10]);
-    geometryPassMesh.alignToBBoxCenter(obj.bbox);
+    const scale = 5;
+    geometryPassMesh.scale.set([scale, scale, scale]);
+    geometryPassMesh.alignToBBox(obj.bbox, "bottom");
 });
 
 /* -------------------------------------------------------------------------- */
 /*                                  run loop                                  */
 /* -------------------------------------------------------------------------- */
 function animate() {
+    renderer.enableShadowPass = true;
+
     renderer.setRenderTarget(renderTarget);
     renderer.render(deferredScene, camera);
 
+    debugMaterial3.map = dirLight.shadow.map.texture;
+
     renderer.setRenderTarget(null);
+
+    renderer.enableShadowPass = false;
 
     renderer.render(renderScene, camera);
 

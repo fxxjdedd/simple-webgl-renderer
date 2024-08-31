@@ -1,6 +1,6 @@
 import { Vec3, Mat4, Quat, Vec4, Mat3 } from "gl-matrix";
 import { GL_Program } from "../gl/glProgram";
-import { Camera, Material, Mesh, Scene } from "./core";
+import { Camera, Geometry, Material, Mesh, Object3D, Scene } from "./core";
 import { GL_BindingState, GL_BindingStates } from "../gl/glBindingStates";
 import { WebGLRenderTarget } from "./renderTarget";
 import { GL_State } from "../gl/glState";
@@ -11,6 +11,7 @@ import { Texture } from "./texture";
 import { GL_ConstantsMapping } from "../gl/glConstantsMapping";
 import { GL_ProgramManager } from "../gl/glProgramManager";
 import { DepthTexture } from "../textures/depthTexture";
+import { GL_ShadowDepthPass } from "../gl/pass/glShadowDepthPass";
 
 export class WebGLRenderer {
     gl: WebGL2RenderingContext;
@@ -22,9 +23,22 @@ export class WebGLRenderer {
     constantsMapping: GL_ConstantsMapping;
     clearBits = 0;
     viewport: Vec4;
+    shadowDepthPass: GL_ShadowDepthPass;
+    currentRenderTarget: WebGLRenderTarget = null;
+
+    enableShadowPass = false;
 
     constructor(public canvas: HTMLCanvasElement) {
-        const gl = (this.gl = canvas.getContext("webgl2"));
+        const gl = (this.gl = canvas.getContext("webgl2", {
+            depth: true,
+            stencil: false,
+            alpha: false,
+            antialias: false,
+            premultipliedAlpha: true,
+            preserveDrawingBuffer: false,
+            powerPreference: "default",
+            failIfMajorPerformanceCaveat: false,
+        }));
         this.programManager = new GL_ProgramManager(gl);
         this.state = new GL_State(gl);
         this.constantsMapping = new GL_ConstantsMapping(gl);
@@ -33,33 +47,35 @@ export class WebGLRenderer {
         this.clearBits = this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT;
         this.viewport = new Vec4(0, 0, this.canvas.width, this.canvas.height);
         this.renderState = new GL_RenderState();
+        this.shadowDepthPass = new GL_ShadowDepthPass(this);
     }
 
     render(scene: Scene, camera: Camera) {
-        this.gl.clearColor(0, 0, 0, 1);
-        // NOTE: depth is not linear, see: https://learnopengl.com/Advanced-OpenGL/Depth-testing
-        this.gl.clearDepth(1);
-        this.gl.enable(this.gl.DEPTH_TEST);
-        this.gl.depthFunc(this.gl.LEQUAL);
-        if (this.clearBits > 0) {
-            this.gl.clear(this.clearBits);
-        }
-
         this.renderState.clear();
 
         camera.updateMatrixWorld();
 
-        for (const obj of scene.objects) {
+        for (const obj of scene.children) {
             if (obj instanceof Light) {
+                obj.updateMatrixWorld();
                 this.renderState.addLight(obj);
             }
         }
 
+        if (this.enableShadowPass) {
+            const shadowLights = this.renderState.getLights().filter((light) => light.castShadow);
+
+            this.shadowDepthPass.render(shadowLights, scene, camera);
+        }
+
         this.renderState.setup();
 
-        for (const obj of scene.objects) {
+        this.gl.clearColor(0, 0, 0, 1);
+        this.clear();
+
+        for (const obj of scene.children) {
             if (obj instanceof Mesh) {
-                this.renderMesh(obj, camera);
+                this.renderObject(obj, obj.geometry, obj.material, camera);
             }
         }
 
@@ -67,18 +83,22 @@ export class WebGLRenderer {
         this.viewport = new Vec4(0, 0, this.canvas.width, this.canvas.height);
     }
 
-    renderMesh(mesh: Mesh, camera: Camera) {
-        mesh.updateMatrixWorld();
+    renderObject(object: Object3D, geometry: Geometry, material: Material, camera: Camera) {
+        object.updateMatrixWorld();
 
-        Mat4.multiply(mesh.mvMatrix, camera.matrixWorldInv, mesh.matrixWorld);
+        Mat4.multiply(object.mvMatrix, camera.matrixWorldInv, object.matrixWorld);
 
-        Mat3.fromMat4(mesh.normalMatrix, Mat4.clone(mesh.mvMatrix).invert().transpose());
+        Mat3.fromMat4(object.normalMatrix, Mat4.clone(object.mvMatrix).invert().transpose());
 
         const defines = {};
-        for (const name in mesh.material.uniforms) {
-            const value = mesh.material.uniforms[name];
+        for (const name in material.uniforms) {
+            const value = material.uniforms[name];
             if (name === "normalMap" && value instanceof Texture) {
                 defines["USE_NORMAL_MAP"] = 1;
+            }
+
+            if (name === "map" && value instanceof Texture) {
+                defines["USE_MAP"] = 1;
             }
 
             if (name === "map" && value instanceof DepthTexture) {
@@ -86,30 +106,34 @@ export class WebGLRenderer {
             }
         }
 
-        const program = this.programManager.getProgram(mesh.material.name, defines);
+        const program = this.programManager.getProgram(material.name, defines);
         if (!program) {
-            throw new Error("No properly program found for material: " + mesh.material.name);
+            throw new Error("No properly program found for material: " + material.name);
         }
 
         this.textures.resetTextureUnit();
-        this.gl.createTexture();
-        this.state.bindTexture(0, null);
 
         this.gl.useProgram(program.program);
 
         // prettier-ignore
         program.setUniform("projMatrix", camera.projectionMatrix);
-        program.setUniform("mvMatrix", mesh.mvMatrix);
+        program.setUniform("mvMatrix", object.mvMatrix);
         program.setUniform("viewMatrix", camera.matrixWorldInv);
-        program.setUniform("modelMatrix", mesh.matrixWorld);
-        program.setUniform("normalMatrix", mesh.normalMatrix);
+        program.setUniform("modelMatrix", object.matrixWorld);
+        program.setUniform("normalMatrix", object.normalMatrix);
         program.setUniform("viewport", this.viewport);
+        program.setUniform("viewport", this.viewport);
+        program.setUniform("logDepthFactor", 2.0 / (Math.log(camera.far + 1.0) / Math.LN2));
         if (this.renderState.hasLight) {
+            // TODO: multiple light
             program.setUniform("dirLight", this.renderState.lights.dirLights[0]);
+            program.setUniform("dirLightShadow", this.renderState.lights.dirLightShadows[0]);
+            program.setUniform("dirLightShadowMap", this.renderState.lights.dirLightShadowMaps[0], this.textures);
+            program.setUniform("dirLightShadowMatrix", this.renderState.lights.dirLightShadowMatrixs[0]);
         }
 
-        for (const name in mesh.material.uniforms) {
-            const value = mesh.material.uniforms[name];
+        for (const name in material.uniforms) {
+            const value = material.uniforms[name];
             if (value instanceof Texture) {
                 program.setUniform(name, value, this.textures);
             } else {
@@ -118,8 +142,8 @@ export class WebGLRenderer {
         }
 
         let bindingState: GL_BindingState;
-        if (!(bindingState = this.bindingStates.getBindingState(program, mesh.geometry))) {
-            bindingState = this.bindingStates.setBindingState(program, mesh.geometry);
+        if (!(bindingState = this.bindingStates.getBindingState(program, geometry))) {
+            bindingState = this.bindingStates.setBindingState(program, geometry);
         }
 
         bindingState.bind();
@@ -140,6 +164,7 @@ export class WebGLRenderer {
 
     setRenderTarget(renderTarget: WebGLRenderTarget) {
         if (renderTarget !== null) {
+            this.currentRenderTarget = renderTarget;
             renderTarget.setupRenderTarget(this.gl, this.textures);
 
             this.state.bindFrameBuffer(renderTarget.framebuffer);
@@ -149,6 +174,7 @@ export class WebGLRenderer {
             // https://www.khronos.org/opengl/wiki/Framebuffer_Object#Framebuffer_Completeness
             // const r = this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER);
         } else {
+            this.currentRenderTarget = null;
             this.state.bindFrameBuffer(null);
             this.state.drawBuffers(null);
             this.setViewport(0, 0, this.canvas.width, this.canvas.height);
@@ -162,5 +188,9 @@ export class WebGLRenderer {
 
     setClearbits(bits) {
         this.clearBits = bits;
+    }
+
+    clear() {
+        if (this.clearBits > 0) this.gl.clear(this.clearBits);
     }
 }
