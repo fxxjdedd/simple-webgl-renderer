@@ -140,7 +140,6 @@ export const fragment = /* glsl */ `#version 300 es
 	uniform float metalness;
 	uniform float roughness;
 
-	uniform sampler2D g_pos;
 	uniform sampler2D g_diffuse;
 	uniform sampler2D g_normal;
 	uniform sampler2D g_depth;
@@ -180,7 +179,14 @@ export const fragment = /* glsl */ `#version 300 es
 		vec3 Wi = dirLight.direction;
 		vec3 Wo = inverse(mvMatrix)[3].xyz - pos;
 		float dtLN = clamp(dot(normal, normalize(dirLight.direction)), 0.0, 1.0);
-		vec3 Li = dtLN * dirLight.color * dirLight.intensity; // radiance
+
+		vec3 shadowWorldPos = pos + normal * dirLightShadow.shadowNormalBias;
+		float shadowFactor = shadowCompare(shadowWorldPos);
+
+		vec3 directLightColor = dirLight.color * shadowFactor;
+		float directLightIntensity = dirLight.intensity;
+
+		vec3 Li = dtLN * directLightColor * directLightIntensity; // radiance
 
 		// direct lighting
 		outLight.diffuseColor += Li * BRDF_DiffusePart(pbrMaterial.diffuseColor);
@@ -192,14 +198,10 @@ export const fragment = /* glsl */ `#version 300 es
 
 		outLight.indirectDiffuse = irradiance * BRDF_DiffusePart(pbrMaterial.diffuseColor);
 
-
 		vec3 Lo_Diffuse = outLight.diffuseColor + outLight.indirectDiffuse;
 		vec3 Lo_Specular = outLight.specularColor + outLight.indirectSpecular; 
 		vec3 Lo = Lo_Diffuse + Lo_Specular;
 
-		vec3 shadowWorldPos = pos + normal * dirLightShadow.shadowNormalBias;
-		float shadowFactor = shadowCompare(shadowWorldPos);
-
-		fragColor = vec4(Lo * shadowFactor, 1.0);
+		fragColor = vec4(Lo, 1.0);
 	}
 `;

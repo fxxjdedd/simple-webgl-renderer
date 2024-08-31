@@ -57,12 +57,7 @@ orbitControl.setupEventListeners();
 
 const deferredMaterial = new DeferredMaterial();
 const geometryPassMesh = new Mesh(geometryPassGeometry, deferredMaterial);
-// geometryPassMesh.position.x = 0.2;
 geometryPassMesh.castShadow = true;
-
-const geometryPassMesh2 = new Mesh(geometryPassGeometry, deferredMaterial);
-geometryPassMesh2.castShadow = true;
-geometryPassMesh2.position.x = 0.25;
 
 const diffuseMap = new TextureLoader().load("/textures/medieval_red_brick_1k/medieval_red_brick_diff_1k.jpg");
 const normalMap = new TextureLoader().load("/textures/medieval_red_brick_1k/medieval_red_brick_nor_gl_1k.png");
@@ -71,8 +66,8 @@ deferredMaterial4Plane.map = diffuseMap;
 deferredMaterial4Plane.normalMap = normalMap;
 const geometryPassMesh4Plane = new Mesh(groundPlane, deferredMaterial4Plane);
 geometryPassMesh4Plane.receiveShadow = true;
-// const scale = 2;
-// geometryPassMesh4Plane.scale.set(Array(3).fill(scale));
+const scale = 2;
+geometryPassMesh4Plane.scale.set(Array(3).fill(scale));
 
 const depthTexture = new DepthTexture(gl);
 
@@ -82,7 +77,7 @@ const renderTarget = new WebGLRenderTarget(
     {
         enableDepthBuffer: true,
         depthTexture: depthTexture,
-        colorsCount: 3,
+        colorsCount: 2,
     }
 );
 
@@ -94,7 +89,6 @@ const lightingPassMesh = new Mesh(screenPlane, pbrMaterial);
 pbrMaterial.uniforms = {
     g_diffuse: renderTarget.textures[0],
     g_normal: renderTarget.textures[1],
-    g_pos: renderTarget.textures[2],
     g_depth: depthTexture,
     metalness: 0.0,
     roughness: 1.0,
@@ -105,8 +99,8 @@ dirLight.castShadow = true;
 dirLight.position = new Vec3(5, 5, 5);
 dirLight.target = geometryPassMesh4Plane;
 dirLight.color = new Vec3(1, 1, 1);
-dirLight.intensity = 1.0;
-dirLight.shadow.bias = -0.00001;
+dirLight.intensity = 3.0;
+dirLight.shadow.bias = -0.00005;
 
 /* -------------------------------------------------------------------------- */
 /*                           DeferredDebugMaterials                           */
@@ -127,7 +121,7 @@ debugMaterial1.map = renderTarget.textures[0];
 debugMaterial1.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
 debugMaterial2.map = renderTarget.textures[1];
 debugMaterial2.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
-debugMaterial3.map = renderTarget.textures[2];
+// debugMaterial3.map = dirLight.shadow.map.texture;
 debugMaterial3.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
 debugMaterial4.map = depthTexture;
 debugMaterial4.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
@@ -148,11 +142,9 @@ const viewportScene4 = new Scene([debug4]);
 /*                               event handlers                               */
 /* -------------------------------------------------------------------------- */
 objLoader2.onLoad((obj) => {
-    // const scale = 5;
-    // geometryPassMesh.scale.set([scale, scale, scale]);
+    const scale = 5;
+    geometryPassMesh.scale.set([scale, scale, scale]);
     geometryPassMesh.alignToBBox(obj.bbox, "bottom");
-    // geometryPassMesh2.scale.set([scale, scale, scale]);
-    geometryPassMesh2.alignToBBox(obj.bbox, "bottom");
 });
 
 /* -------------------------------------------------------------------------- */
@@ -164,8 +156,9 @@ function animate() {
     renderer.setRenderTarget(renderTarget);
     renderer.render(deferredScene, camera);
 
+    debugMaterial3.map = dirLight.shadow.map.texture;
+
     renderer.setRenderTarget(null);
-    debugMaterial4.map = dirLight.shadow.map.texture;
 
     renderer.enableShadowPass = false;
 

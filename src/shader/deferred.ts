@@ -35,7 +35,6 @@ export const fragment = /* glsl */ `#version 300 es
 
 	layout(location = 0) out vec4 g_diffuse;
 	layout(location = 1) out vec4 g_normal;
-	layout(location = 2) out vec4 g_pos;
 
 #ifdef USE_MAP
 	uniform sampler2D map;
@@ -82,6 +81,5 @@ export const fragment = /* glsl */ `#version 300 es
 #else
 		g_diffuse = diffuse;
 #endif
-		g_pos = vec4(vec3(gl_FragCoord.z), 1.0);
 	}
 `;
