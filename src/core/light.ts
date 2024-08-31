@@ -29,13 +29,13 @@ export class LightShadow {
     frustum: Frustum = new Frustum();
     map: WebGLRenderTarget = null;
     map2: WebGLRenderTarget = null;
-    bias = -0.005;
+    bias = 0;
     normalBias = 0;
     radius = 1;
     blurSamples = 8;
     mapSize = new Vec2(512, 512);
     constructor(public light: Light) {
-        this.camera = new OrthoCamera(-0.5, 0.5, 0.5, -0.5, 8.5, 9);
+        this.camera = new OrthoCamera(-0.5, 0.5, 0.5, -0.5, 0.01, 500);
         this.frustum = new Frustum();
         this.vpMatrix = new Mat4();
     }

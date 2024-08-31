@@ -1,3 +1,5 @@
+import packing from "./chunks/packing";
+
 export const vertex = /* glsl */ `#version 300 es
     precision highp float;
 	#pragma vscode_glsllint_stage : vert //pragma to set STAGE to 'vert'
@@ -38,11 +40,14 @@ export const fragment = /* glsl */ `#version 300 es
 
     layout(location = 0) out vec4 depthColor; // cause renderTarget must have at least one color texture
 
+    ${packing}
+
 	void main() {
+        // comment cause not need at now
         // gl_FragDepth = log2(v_depth) * logDepthFactor * 0.5;
-        // float depth = 0.5 * v_fragZW.x / v_fragZW.y + 0.5; // from three.js
-        // depth = (depth + 1.0) / 2.0;
-        float depth = gl_FragCoord.z;
-        depthColor = vec4(vec3(depth), 1.0);
+
+        // see: https://github.com/mrdoob/three.js/issues/9092
+        float depth = 0.5 * v_fragZW.x / v_fragZW.y + 0.5;
+        depthColor = packDepthToRGBA( depth );
 	}
 `;

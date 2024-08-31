@@ -1,3 +1,5 @@
+import packing from "./chunks/packing";
+
 export const vertex = /* glsl */ `#version 300 es
 	precision highp float;
 	#pragma vscode_glsllint_stage : vert //pragma to set STAGE to 'vert'
@@ -113,6 +115,8 @@ export const fragment = /* glsl */ `#version 300 es
 	uniform sampler2D dirLightShadowMap;
 	uniform mat4 dirLightShadowMatrix;
 
+	${packing}
+
 	float shadowCompare(vec3 pos) {
 		vec4 posShadow = dirLightShadowMatrix * vec4(pos, 1.0);
 
@@ -120,18 +124,14 @@ export const fragment = /* glsl */ `#version 300 es
 		vec3 posShadowUV = (posShadowNDC + 1.0) / 2.0;
 		// vec3 posShadowUV = posShadowNDC*0.5 + 0.5;
 
-		// if (posShadowUV.x > 1.0 || posShadowUV.y > 1.0){
-		// 	return vec3(1.0, 0.0, 0.0);	
-		// }
+		if (posShadowUV.x > 1.0 || posShadowUV.y > 1.0 || posShadowUV.x < 0.0 || posShadowUV.y < 0.0){
+			return 1.0;
+		}
 
-		// if ( posShadowUV.x < 0.0 || posShadowUV.y < 0.0 ) {
-		// 	return vec3(0.0, 1.0, 0.0);
-		// }
+		float posDepth = posShadowUV.z + dirLightShadow.shadowBias;
+		float texDepth = unpackRGBAToDepth( texture( dirLightShadowMap, posShadowUV.xy ) );
+		float shadow = step(posDepth, texDepth);
 
-		float closestDepth = texture(dirLightShadowMap, posShadowUV.xy).r;
-		float currentDepth = posShadowUV.z + dirLightShadow.shadowBias;
-
-		float shadow = step(closestDepth, currentDepth);
 		return shadow;
 	}
 
@@ -198,14 +198,8 @@ export const fragment = /* glsl */ `#version 300 es
 		vec3 Lo = Lo_Diffuse + Lo_Specular;
 
 		vec3 shadowWorldPos = pos + normal * dirLightShadow.shadowNormalBias;
-		// vec3 shadowWorldPos = pos;
 		float shadowFactor = shadowCompare(shadowWorldPos);
-		// vec3 shadowFactor = shadowCompare(shadowWorldPos);
 
-		fragColor = vec4(Lo * (1.0 - shadowFactor), 1.0);
-		// fragColor = vec4(Lo, 1.0);
-		// fragColor = vec4(vec3(shadowFactor.z), 1.0);
-
-		// fragColor = vec4(vec3(shadowFactor), 1.0);
+		fragColor = vec4(Lo * shadowFactor, 1.0);
 	}
 `;

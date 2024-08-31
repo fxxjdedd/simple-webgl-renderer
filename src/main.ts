@@ -106,6 +106,7 @@ dirLight.position = new Vec3(5, 5, 5);
 dirLight.target = geometryPassMesh4Plane;
 dirLight.color = new Vec3(1, 1, 1);
 dirLight.intensity = 1.0;
+dirLight.shadow.bias = -0.00001;
 
 /* -------------------------------------------------------------------------- */
 /*                           DeferredDebugMaterials                           */
