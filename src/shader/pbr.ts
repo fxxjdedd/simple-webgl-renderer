@@ -81,15 +81,14 @@ export const fragment = /* glsl */ `#version 300 es
 		vec3 H = normalize(Wo + Wi);
 		float dotLN = clamp(dot(Wi, normal), 0.0, 1.0);
 		float dotVN = clamp(dot(Wo, normal), 0.0, 1.0);
-		float dotVH = clamp(dot(Wo, normal), 0.0, 1.0);
-		float dotNH = clamp(dot(H, normal), 0.0, 1.0);
+		float dotVH = clamp(dot(Wo, H), 0.0, 1.0);
+		float dotNH = clamp(dot(normal, H), 0.0, 1.0);
 
 		vec3 F = BRDF_Fresnel(F0, F90, dotVH);
 		float D = BRDF_Distribution(alpha, dotNH);
 		float G = BRDF_Geometry(alpha, dotLN, dotVN);
 
 		return F * (D * G);
-		// return F0 * D;
 	}
 
 	vec3 BRDF_DiffusePart(vec3 diffuseColor) {
@@ -157,11 +156,7 @@ export const fragment = /* glsl */ `#version 300 es
 		vec3 ndc = vec3(uv, depth) * 2.0 - 1.0;
 		vec4 posHomo = (inverse(projMatrix * viewMatrix) * vec4(ndc, 1.0));
 		vec3 pos = (posHomo/posHomo.w).xyz;
-
-		vec3 L = dirLight.direction;
-		vec3 N = normal;
-		vec3 V = inverse(mvMatrix)[3].xyz - pos;
-		vec3 H = normalize(L + V);
+		vec3 posView = (viewMatrix * vec4(pos, 1.0)).xyz;
 
 		BRDFOutLight outLight;
 
@@ -177,7 +172,7 @@ export const fragment = /* glsl */ `#version 300 es
 		pbrMaterial.roughness = min( pbrMaterial.roughness, 1.0 );
 
 		vec3 Wi = dirLight.direction;
-		vec3 Wo = inverse(mvMatrix)[3].xyz - pos;
+		vec3 Wo = inverse(viewMatrix)[3].xyz - pos;
 		float dtLN = clamp(dot(normal, normalize(dirLight.direction)), 0.0, 1.0);
 
 		vec3 shadowWorldPos = pos + normal * dirLightShadow.shadowNormalBias;

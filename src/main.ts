@@ -59,8 +59,9 @@ const deferredMaterial = new DeferredMaterial();
 const geometryPassMesh = new Mesh(geometryPassGeometry, deferredMaterial);
 geometryPassMesh.castShadow = true;
 
-const diffuseMap = new TextureLoader().load("/textures/medieval_red_brick_1k/medieval_red_brick_diff_1k.jpg");
-const normalMap = new TextureLoader().load("/textures/medieval_red_brick_1k/medieval_red_brick_nor_gl_1k.png");
+const diffuseMap = new TextureLoader().load("/textures/ganges_river_pebbles_1k/ganges_river_pebbles_diff_1k.jpg");
+const normalMap = new TextureLoader().load("/textures/ganges_river_pebbles_1k/ganges_river_pebbles_nor_gl_1k.png");
+
 const deferredMaterial4Plane = new DeferredMaterial();
 deferredMaterial4Plane.map = diffuseMap;
 deferredMaterial4Plane.normalMap = normalMap;

@@ -122,7 +122,6 @@ export class WebGLRenderer {
         program.setUniform("modelMatrix", object.matrixWorld);
         program.setUniform("normalMatrix", object.normalMatrix);
         program.setUniform("viewport", this.viewport);
-        program.setUniform("viewport", this.viewport);
         program.setUniform("logDepthFactor", 2.0 / (Math.log(camera.far + 1.0) / Math.LN2));
         if (this.renderState.hasLight) {
             // TODO: multiple light
