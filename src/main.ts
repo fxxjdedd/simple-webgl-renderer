@@ -6,7 +6,7 @@ import { WebGLRenderTarget } from "./core/renderTarget";
 import { DepthTexture } from "./textures/depthTexture";
 import { Vec3, Vec4 } from "gl-matrix";
 import { DirectionalLight } from "./core/light";
-import { DebugMaterial, DeferredDebugMaterial, DeferredMaterial, NormalMaterial, PBRMaterial } from "./materials";
+import { DebugMaterial, DeferredDebugMaterial, DeferredMaterial, PBRMaterial } from "./materials";
 import { TextureLoader } from "./loader/TextureLoader";
 import { OBJLoader } from "./loader/OBJLoader";
 import { ScreenPlane } from "./geometry/ScreenPlane";
@@ -133,7 +133,6 @@ debugMaterial4.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
 
 const deferredScene = new Scene([geometryPassMesh, geometryPassMesh4Plane, dirLight]);
 const renderScene = new Scene([lightingPassMesh, dirLight]);
-renderScene.overrideMaterial = new NormalMaterial();
 
 const viewportScene1 = new Scene([debug1]);
 const viewportScene2 = new Scene([debug2]);

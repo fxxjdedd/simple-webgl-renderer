@@ -1,12 +1,5 @@
-import {
-    DebugMaterial,
-    DeferredDebugMaterial,
-    DeferredMaterial,
-    DepthMaterial,
-    NormalMaterial,
-    PBRMaterial,
-} from "../materials";
-import { deferredShader, pbrShader, deferredDebugShader, debugShader, depthShader, normalShader } from "../shader";
+import { DebugMaterial, DeferredDebugMaterial, DeferredMaterial, DepthMaterial, PBRMaterial } from "../materials";
+import { deferredShader, pbrShader, deferredDebugShader, debugShader, depthShader } from "../shader";
 import { GL_Program } from "./glProgram";
 export class GL_ProgramManager {
     cache = {} as Record<string, GL_Program>;
@@ -33,8 +26,6 @@ export class GL_ProgramManager {
                 return deferredShader;
             case DepthMaterial.name:
                 return depthShader;
-            case NormalMaterial.name:
-                return normalShader;
             default:
                 throw new Error("No shader found for name: " + name);
         }
