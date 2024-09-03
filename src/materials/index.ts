@@ -42,3 +42,11 @@ export class DepthMaterial extends Material {
         super("DepthMaterial");
     }
 }
+
+export class NormalMaterial extends Material {
+    // TODO:
+    // static name = "NormalMaterial";
+    constructor() {
+        super("NormalMaterial");
+    }
+}

@@ -135,6 +135,7 @@ class Mesh extends Object3D {
 }
 
 class Scene extends Object3D {
+    overrideMaterial: Material = null;
     constructor(objects?: Object3D[]) {
         super();
         if (objects) {

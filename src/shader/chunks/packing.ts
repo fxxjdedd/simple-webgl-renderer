@@ -18,4 +18,19 @@ float unpackRGBAToDepth( const in vec4 v ) {
 	return dot( v, UnpackFactors );
 }
 
+vec3 unpackTangentNormalMap(sampler2D normalMap, vec2 uv, vec3 surfPosInEye, vec3 surfNormal) {
+	vec3 nColor = texture(normalMap, uv).xyz;
+	vec3 nValue = nColor * 2.0 - 1.0;
+	vec3 dPosX = dFdx(surfPosInEye);
+	vec3 dPosY = dFdy(surfPosInEye);
+	vec2 dUvX = dFdx(uv);
+	vec2 dUvY = dFdy(uv);
+
+	vec3 S = normalize( dPosX * dUvY.y - dPosY * dUvX.y );
+	vec3 T = normalize( -dPosX * dUvY.x + dPosY * dUvX.x );
+	vec3 N = normalize( surfNormal );
+
+	mat3 tsn = mat3( S, T, N );
+	return normalize( tsn * nValue );
+}
 `;

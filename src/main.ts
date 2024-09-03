@@ -6,7 +6,7 @@ import { WebGLRenderTarget } from "./core/renderTarget";
 import { DepthTexture } from "./textures/depthTexture";
 import { Vec3, Vec4 } from "gl-matrix";
 import { DirectionalLight } from "./core/light";
-import { DebugMaterial, DeferredDebugMaterial, DeferredMaterial, PBRMaterial } from "./materials";
+import { DebugMaterial, DeferredDebugMaterial, DeferredMaterial, NormalMaterial, PBRMaterial } from "./materials";
 import { TextureLoader } from "./loader/TextureLoader";
 import { OBJLoader } from "./loader/OBJLoader";
 import { ScreenPlane } from "./geometry/ScreenPlane";
@@ -20,12 +20,12 @@ const gl = renderer.gl;
 /*                                 Geometries                                 */
 /* -------------------------------------------------------------------------- */
 
-// const objLoader1 = new OBJLoader();
-const objLoader2 = new OBJLoader();
-// const cube = objLoader1.load("/3d-models/cube.obj");
-const bunny = objLoader2.load("/3d-models/stanford-bunny.obj");
+const objLoader = new OBJLoader();
+// const cube = objLoader.load("/3d-models/cube.obj");
+// const bunny = objLoader.load("/3d-models/stanford-bunny.obj");
+const rockerArm = objLoader.load("/3d-models/rocker-arm.obj");
 
-const geometryPassGeometry = bunny;
+const geometryPassGeometry = rockerArm;
 const screenPlane = new ScreenPlane();
 const groundPlane = new Plane();
 
@@ -133,6 +133,7 @@ debugMaterial4.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
 
 const deferredScene = new Scene([geometryPassMesh, geometryPassMesh4Plane, dirLight]);
 const renderScene = new Scene([lightingPassMesh, dirLight]);
+renderScene.overrideMaterial = new NormalMaterial();
 
 const viewportScene1 = new Scene([debug1]);
 const viewportScene2 = new Scene([debug2]);
@@ -142,9 +143,9 @@ const viewportScene4 = new Scene([debug4]);
 /* -------------------------------------------------------------------------- */
 /*                               event handlers                               */
 /* -------------------------------------------------------------------------- */
-objLoader2.onLoad((obj) => {
-    const scale = 5;
-    geometryPassMesh.scale.set([scale, scale, scale]);
+objLoader.onLoad((obj) => {
+    // const scale = 5;
+    // geometryPassMesh.scale.set([scale, scale, scale]);
     geometryPassMesh.alignToBBox(obj.bbox, "bottom");
 });
 

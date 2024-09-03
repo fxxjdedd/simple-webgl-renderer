@@ -75,7 +75,8 @@ export class WebGLRenderer {
 
         for (const obj of scene.children) {
             if (obj instanceof Mesh) {
-                this.renderObject(obj, obj.geometry, obj.material, camera);
+                const material = scene.overrideMaterial ?? obj.material;
+                this.renderObject(obj, obj.geometry, material, camera);
             }
         }
 
