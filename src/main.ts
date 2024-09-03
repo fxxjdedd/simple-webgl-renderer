@@ -12,6 +12,7 @@ import { OBJLoader } from "./loader/OBJLoader";
 import { ScreenPlane } from "./geometry/ScreenPlane";
 import { getAdaptiveAspectRatio } from "./util/texture";
 import { Plane } from "./geometry/Plane";
+import { SSAO } from "./post-effects/SSAO";
 const canvas = document.getElementById("webglcanvas") as HTMLCanvasElement;
 const renderer = new WebGLRenderer(canvas);
 const gl = renderer.gl;
@@ -72,7 +73,7 @@ geometryPassMesh4Plane.scale.set(Array(3).fill(scale));
 
 const depthTexture = new DepthTexture(gl);
 
-const renderTarget = new WebGLRenderTarget(
+const gBufferRenderTarget = new WebGLRenderTarget(
     canvas.width * window.devicePixelRatio,
     canvas.height * window.devicePixelRatio,
     {
@@ -88,8 +89,8 @@ const renderTarget = new WebGLRenderTarget(
 const pbrMaterial = new PBRMaterial();
 const lightingPassMesh = new Mesh(screenPlane, pbrMaterial);
 pbrMaterial.uniforms = {
-    g_diffuse: renderTarget.textures[0],
-    g_normal: renderTarget.textures[1],
+    g_diffuse: gBufferRenderTarget.textures[0],
+    g_normal: gBufferRenderTarget.textures[1],
     g_depth: depthTexture,
     metalness: 0.0,
     roughness: 1.0,
@@ -116,11 +117,11 @@ const debug2 = new Mesh(screenPlane, debugMaterial2);
 const debug3 = new Mesh(screenPlane, debugMaterial3);
 const debug4 = new Mesh(screenPlane, debugMaterial4);
 
-const adaptiveAspectRatio = getAdaptiveAspectRatio(renderTarget.width, renderTarget.height);
+const adaptiveAspectRatio = getAdaptiveAspectRatio(gBufferRenderTarget.width, gBufferRenderTarget.height);
 
-debugMaterial1.map = renderTarget.textures[0];
+debugMaterial1.map = gBufferRenderTarget.textures[0];
 debugMaterial1.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
-debugMaterial2.map = renderTarget.textures[1];
+debugMaterial2.map = gBufferRenderTarget.textures[1];
 debugMaterial2.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
 // debugMaterial3.map = dirLight.shadow.map.texture;
 debugMaterial3.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
@@ -149,12 +150,18 @@ objLoader.onLoad((obj) => {
 });
 
 /* -------------------------------------------------------------------------- */
+/*                                post-effects                                */
+/* -------------------------------------------------------------------------- */
+
+const ssao = new SSAO(camera, renderer.viewport.z, renderer.viewport.w);
+
+/* -------------------------------------------------------------------------- */
 /*                                  run loop                                  */
 /* -------------------------------------------------------------------------- */
 function animate() {
     renderer.enableShadowPass = true;
 
-    renderer.setRenderTarget(renderTarget);
+    renderer.setRenderTarget(gBufferRenderTarget);
     renderer.render(deferredScene, camera);
 
     debugMaterial3.map = dirLight.shadow.map.texture;
@@ -164,6 +171,11 @@ function animate() {
     renderer.enableShadowPass = false;
 
     renderer.render(renderScene, camera);
+
+    /* ------------------------- post-effects starts ------------------------- */
+    ssao.render(gBufferRenderTarget);
+
+    /* -------------------------- post-effects ends -------------------------- */
 
     const blockSize = canvas.height / 5;
     renderer.setViewport(0, 0, blockSize, blockSize);

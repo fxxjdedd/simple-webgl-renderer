@@ -12,6 +12,7 @@ import { GL_ConstantsMapping } from "../gl/glConstantsMapping";
 import { GL_ProgramManager } from "../gl/glProgramManager";
 import { DepthTexture } from "../textures/depthTexture";
 import { GL_ShadowDepthPass } from "../gl/pass/glShadowDepthPass";
+import { ShaderMaterial } from "../materials/ShaderMaterial";
 
 export class WebGLRenderer {
     gl: WebGL2RenderingContext;
@@ -107,7 +108,7 @@ export class WebGLRenderer {
             }
         }
 
-        const program = this.programManager.getProgram(material.name, defines);
+        const program = this.programManager.getProgram(material, defines);
         if (!program) {
             throw new Error("No properly program found for material: " + material.name);
         }
