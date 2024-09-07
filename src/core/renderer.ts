@@ -47,7 +47,7 @@ export class WebGLRenderer {
         this.bindingStates = new GL_BindingStates(gl);
         this.clearBits = this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT;
         this.viewport = new Vec4(0, 0, this.canvas.width, this.canvas.height);
-        this.renderState = new GL_RenderState();
+        this.renderState = new GL_RenderState(gl, this.viewport);
         this.shadowDepthPass = new GL_ShadowDepthPass(this);
     }
 
@@ -60,6 +60,10 @@ export class WebGLRenderer {
             if (obj instanceof Light) {
                 obj.updateMatrixWorld();
                 this.renderState.addLight(obj);
+            } else if (obj instanceof Mesh) {
+                if (obj.material.enableDeferredRendering) {
+                    this.renderState.addDeferredMesh(obj);
+                }
             }
         }
 
@@ -71,14 +75,30 @@ export class WebGLRenderer {
 
         this.renderState.setup();
 
-        this.gl.clearColor(0, 0, 0, 1);
-        this.clear();
+        const forwardPassMeshes: Mesh[] = [];
 
-        for (const obj of scene.children) {
-            if (obj instanceof Mesh) {
-                const material = scene.overrideMaterial ?? obj.material;
-                this.renderObject(obj, obj.geometry, material, camera);
+        if (this.renderState.hasDeferredMesh) {
+            this.setRenderTarget(this.renderState.getDerferredRenderTarget());
+            this.gl.clearColor(0, 0, 0, 1);
+            this.clear();
+
+            for (const [mesh, defferedMeshDef] of this.renderState.deferred.deferredMeshes) {
+                this.renderObject(mesh, defferedMeshDef.geometry, defferedMeshDef.material, camera);
             }
+
+            this.setRenderTarget(null);
+
+            this.gl.clearColor(0, 0, 0, 1);
+            this.clear();
+
+            const forwardMeshDefs = this.renderState.deferred.batchedForwardMeshes;
+
+            forwardPassMeshes.push(...forwardMeshDefs.map((def) => new Mesh(def.geometry, def.material)));
+        }
+
+        for (const mesh of forwardPassMeshes) {
+            const material = scene.overrideMaterial ?? mesh.material;
+            this.renderObject(mesh, mesh.geometry, material, camera);
         }
 
         this.clearBits = this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT;
@@ -131,6 +151,14 @@ export class WebGLRenderer {
             program.setUniform("dirLightShadow", this.renderState.lights.dirLightShadows[0]);
             program.setUniform("dirLightShadowMap", this.renderState.lights.dirLightShadowMaps[0], this.textures);
             program.setUniform("dirLightShadowMatrix", this.renderState.lights.dirLightShadowMatrixs[0]);
+        }
+
+        if (material.enableDeferredRendering) {
+            const gbuffer = this.renderState.getDeferredGBuffer();
+            material.uniforms["g_diffuse"] = gbuffer.diffuse;
+            material.uniforms["g_normal"] = gbuffer.normal;
+            // use g-buffer packed depth instead of depth texture
+            material.uniforms["g_depth"] = gbuffer.depth;
         }
 
         for (const name in material.uniforms) {

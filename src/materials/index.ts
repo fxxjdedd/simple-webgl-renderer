@@ -29,6 +29,7 @@ export class PBRMaterial extends Material {
     // static name = "PBRMaterial";
     constructor() {
         super("PBRMaterial");
+        this.enableDeferredRendering = true;
     }
 }
 

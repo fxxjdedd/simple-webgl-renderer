@@ -16,6 +16,7 @@ export const vertex = /* glsl */ `#version 300 es
 	out vec3 v_pos;
 	out vec3 v_normal;
 	out vec2 v_uv;
+    out vec2 v_fragZW;
 
 	void main() {
 		vec4 worldPos = modelMatrix * vec4(position, 1.0);
@@ -24,6 +25,7 @@ export const vertex = /* glsl */ `#version 300 es
 		v_normal = normalMatrix * normal;
 		v_uv = uv;
 		gl_Position = projMatrix * mvMatrix * vec4(position, 1.0);
+        v_fragZW = gl_Position.zw;
 	}
 `;
 
@@ -34,9 +36,11 @@ export const fragment = /* glsl */ `#version 300 es
 	in vec3 v_pos;
 	in vec3 v_normal;
 	in vec2 v_uv;
+    in vec2 v_fragZW;
 
 	layout(location = 0) out vec4 g_diffuse;
 	layout(location = 1) out vec4 g_normal;
+	layout(location = 2) out vec4 g_depth;
 
 #ifdef USE_MAP
 	uniform sampler2D map;
@@ -69,5 +73,8 @@ export const fragment = /* glsl */ `#version 300 es
 #else
 		g_diffuse = diffuse;
 #endif
+
+        float depth = 0.5 * v_fragZW.x / v_fragZW.y + 0.5;
+        g_depth = packDepthToRGBA(depth);
 	}
 `;

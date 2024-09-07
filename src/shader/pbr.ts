@@ -151,7 +151,7 @@ export const fragment = /* glsl */ `#version 300 es
 
 		vec3 diffuse = texture(g_diffuse, uv).xyz;
 		vec3 normal = texture(g_normal, uv).xyz * 2.0 - 1.0;
-		float depth = texture(g_depth, uv).r;
+		float depth = unpackRGBAToDepth(texture(g_depth, uv));
 
 		vec3 ndc = vec3(uv, depth) * 2.0 - 1.0;
 		vec4 posHomo = (inverse(projMatrix * viewMatrix) * vec4(ndc, 1.0));

@@ -12,7 +12,7 @@ import { OBJLoader } from "./loader/OBJLoader";
 import { ScreenPlane } from "./geometry/ScreenPlane";
 import { getAdaptiveAspectRatio } from "./util/texture";
 import { Plane } from "./geometry/Plane";
-import { SSAO } from "./post-effects/SSAO";
+import { SSAOEffect } from "./post-effects/SSAOEffect";
 const canvas = document.getElementById("webglcanvas") as HTMLCanvasElement;
 const renderer = new WebGLRenderer(canvas);
 const gl = renderer.gl;
@@ -53,55 +53,34 @@ const orbitControl = new OrbitControl(renderer, camera);
 orbitControl.setupEventListeners();
 
 /* -------------------------------------------------------------------------- */
-/*                              DeferredMaterials                             */
+/*                                PBRMaterials                                */
 /* -------------------------------------------------------------------------- */
-
-const deferredMaterial = new DeferredMaterial();
-const geometryPassMesh = new Mesh(geometryPassGeometry, deferredMaterial);
-geometryPassMesh.castShadow = true;
 
 const diffuseMap = new TextureLoader().load("/textures/ganges_river_pebbles_1k/ganges_river_pebbles_diff_1k.jpg");
 const normalMap = new TextureLoader().load("/textures/ganges_river_pebbles_1k/ganges_river_pebbles_nor_gl_1k.png");
 
-const deferredMaterial4Plane = new DeferredMaterial();
-deferredMaterial4Plane.map = diffuseMap;
-deferredMaterial4Plane.normalMap = normalMap;
-const geometryPassMesh4Plane = new Mesh(groundPlane, deferredMaterial4Plane);
-geometryPassMesh4Plane.receiveShadow = true;
+// plane
+const pbrMaterial4Plane = new PBRMaterial();
+pbrMaterial4Plane.map = diffuseMap;
+pbrMaterial4Plane.normalMap = normalMap;
+const groundPlaneMesh = new Mesh(groundPlane, pbrMaterial4Plane);
+groundPlaneMesh.receiveShadow = true;
 const scale = 2;
-geometryPassMesh4Plane.scale.set(Array(3).fill(scale));
+groundPlaneMesh.scale.set(Array(3).fill(scale));
 
-const depthTexture = new DepthTexture(gl);
-
-const gBufferRenderTarget = new WebGLRenderTarget(
-    canvas.width * window.devicePixelRatio,
-    canvas.height * window.devicePixelRatio,
-    {
-        enableDepthBuffer: true,
-        depthTexture: depthTexture,
-        colorsCount: 2,
-    }
-);
-
-/* -------------------------------------------------------------------------- */
-/*                                PBRMaterials                                */
-/* -------------------------------------------------------------------------- */
-const pbrMaterial = new PBRMaterial();
-const lightingPassMesh = new Mesh(screenPlane, pbrMaterial);
-pbrMaterial.uniforms = {
-    g_diffuse: gBufferRenderTarget.textures[0],
-    g_normal: gBufferRenderTarget.textures[1],
-    g_depth: depthTexture,
-    metalness: 0.0,
-    roughness: 1.0,
-};
+// model
+const pbrMaterial4Model = new PBRMaterial();
+const modelMesh = new Mesh(geometryPassGeometry, pbrMaterial4Model);
+modelMesh.receiveShadow = true;
+pbrMaterial4Model.uniforms.metalness = 0.0;
+pbrMaterial4Model.uniforms.roughness = 1.0;
 
 const dirLight = new DirectionalLight();
 dirLight.castShadow = true;
 dirLight.position = new Vec3(5, 5, 5);
-dirLight.target = geometryPassMesh4Plane;
+dirLight.target = groundPlaneMesh;
 dirLight.color = new Vec3(1, 1, 1);
-dirLight.intensity = 3.0;
+dirLight.intensity = 1.0;
 dirLight.shadow.bias = -0.00005;
 
 /* -------------------------------------------------------------------------- */
@@ -117,6 +96,7 @@ const debug2 = new Mesh(screenPlane, debugMaterial2);
 const debug3 = new Mesh(screenPlane, debugMaterial3);
 const debug4 = new Mesh(screenPlane, debugMaterial4);
 
+const gBufferRenderTarget = renderer.renderState.getDerferredRenderTarget();
 const adaptiveAspectRatio = getAdaptiveAspectRatio(gBufferRenderTarget.width, gBufferRenderTarget.height);
 
 debugMaterial1.map = gBufferRenderTarget.textures[0];
@@ -125,15 +105,14 @@ debugMaterial2.map = gBufferRenderTarget.textures[1];
 debugMaterial2.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
 // debugMaterial3.map = dirLight.shadow.map.texture;
 debugMaterial3.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
-debugMaterial4.map = depthTexture;
+debugMaterial4.map = gBufferRenderTarget.textures[2];
 debugMaterial4.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
 
 /* -------------------------------------------------------------------------- */
 /*                                   Scenes                                   */
 /* -------------------------------------------------------------------------- */
 
-const deferredScene = new Scene([geometryPassMesh, geometryPassMesh4Plane, dirLight]);
-const renderScene = new Scene([lightingPassMesh, dirLight]);
+const renderScene = new Scene([groundPlaneMesh, modelMesh, dirLight]);
 
 const viewportScene1 = new Scene([debug1]);
 const viewportScene2 = new Scene([debug2]);
@@ -146,34 +125,26 @@ const viewportScene4 = new Scene([debug4]);
 objLoader.onLoad((obj) => {
     // const scale = 5;
     // geometryPassMesh.scale.set([scale, scale, scale]);
-    geometryPassMesh.alignToBBox(obj.bbox, "bottom");
+    modelMesh.alignToBBox(obj.bbox, "bottom");
 });
 
 /* -------------------------------------------------------------------------- */
 /*                                post-effects                                */
 /* -------------------------------------------------------------------------- */
 
-const ssao = new SSAO(camera, renderer.viewport.z, renderer.viewport.w);
+// const ssaoEffect = new SSAOEffect(camera, gBufferRenderTarget, renderer.viewport.z, renderer.viewport.w, 32);
 
 /* -------------------------------------------------------------------------- */
 /*                                  run loop                                  */
 /* -------------------------------------------------------------------------- */
 function animate() {
     renderer.enableShadowPass = true;
-
-    renderer.setRenderTarget(gBufferRenderTarget);
-    renderer.render(deferredScene, camera);
-
+    renderer.render(renderScene, camera);
     debugMaterial3.map = dirLight.shadow.map.texture;
-
-    renderer.setRenderTarget(null);
-
     renderer.enableShadowPass = false;
 
-    renderer.render(renderScene, camera);
-
     /* ------------------------- post-effects starts ------------------------- */
-    ssao.render(gBufferRenderTarget);
+    // ssaoEffect.render(renderer);
 
     /* -------------------------- post-effects ends -------------------------- */
 

@@ -4,8 +4,9 @@ import { WebGLRenderer } from "../core/renderer";
 import { lerp } from "../util/math";
 import { Camera, Scene } from "../core/core";
 import { ShaderMaterial } from "../materials/ShaderMaterial";
+import * as ssaoShader from "../shader/post-effects/ssao";
 
-export class SSAO {
+export class SSAOEffect {
     kernel: Vec3[];
 
     ssaoRenderTarget: WebGLRenderTarget;
@@ -14,29 +15,43 @@ export class SSAO {
     ssaoMaterial: ShaderMaterial;
     blurMaterial: ShaderMaterial;
 
-    constructor(private camera: Camera, private width: number, private height: number, private kernelSize = 32) {
+    constructor(
+        private camera: Camera,
+        private gBufferRTT: WebGLRenderTarget,
+        private width: number,
+        private height: number,
+        private kernelSize = 32
+    ) {
         this.kernel = this.generateSamplerKernel(this.kernelSize);
 
         this.ssaoRenderTarget = new WebGLRenderTarget(this.width, this.height);
         this.blurRenderTarget = new WebGLRenderTarget(this.width, this.height);
 
         this.ssaoMaterial = new ShaderMaterial({
-            vertexShader: "",
-            fragmentShader: "",
+            vertexShader: ssaoShader.vertex,
+            fragmentShader: ssaoShader.fragment,
+            defines: ssaoShader.getDefines(),
+            uniforms: ssaoShader.getUniforms(),
         });
+
+        this.ssaoMaterial.uniforms["kernel"].value = this.kernel;
+        this.ssaoMaterial.uniforms["g_diffuse"] = gBufferRTT.texture[0];
+        this.ssaoMaterial.uniforms["g_normal"] = gBufferRTT.texture[1];
+        this.ssaoMaterial.uniforms["g_depth"] = gBufferRTT.texture[2];
+
         this.blurMaterial = new ShaderMaterial({
             vertexShader: "",
             fragmentShader: "",
         });
     }
-    render(gBuffer: WebGLRenderTarget) {
+    render(renderer: WebGLRenderer) {
         // sampler kernel
     }
 
     private generateSamplerKernel(kernelSize: number) {
         const kernel: Vec3[] = [];
         for (let i = 0; i < kernelSize; i++) {
-            // hemisphere coords
+            // hemisphere coords in tangent space
             const x = Math.random() * 2 - 1;
             const y = Math.random() * 2 - 1;
             const z = Math.random();

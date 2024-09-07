@@ -29,6 +29,9 @@ class Material {
     uniforms: Record<string, any> = {
         diffuse: new Vec4(1, 1, 1, 1),
     };
+
+    enableDeferredRendering = false;
+
     constructor(public name: string) {}
 }
 class Geometry<T extends BufferLayout = BufferLayout> {

@@ -48,6 +48,6 @@ export const fragment = /* glsl */ `#version 300 es
 
         // see: https://github.com/mrdoob/three.js/issues/9092
         float depth = 0.5 * v_fragZW.x / v_fragZW.y + 0.5;
-        depthColor = packDepthToRGBA( depth );
+        depthColor = packDepthToRGBA(depth);
 	}
 `;
