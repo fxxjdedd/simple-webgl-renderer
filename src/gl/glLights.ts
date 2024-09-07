@@ -28,7 +28,7 @@ export class GL_Lights {
             const light = lights[i];
             if (light instanceof DirectionalLight) {
                 const { color, intensity, target, position, shadow } = light;
-                // NOTE: here is Wi
+                // NOTE: here is Wi in world-space, we need transform it to view-space in shader
                 const direction = Vec3.sub(Vec3.create(), position, target.position);
                 this.dirLights[dirLightIndex] = {
                     direction,
