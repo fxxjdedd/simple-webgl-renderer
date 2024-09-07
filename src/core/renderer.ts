@@ -94,6 +94,12 @@ export class WebGLRenderer {
             const forwardMeshDefs = this.renderState.deferred.batchedForwardMeshes;
 
             forwardPassMeshes.push(...forwardMeshDefs.map((def) => new Mesh(def.geometry, def.material)));
+        } else {
+            for (const obj of scene.children) {
+                if (obj instanceof Mesh) {
+                    forwardPassMeshes.push(obj);
+                }
+            }
         }
 
         for (const mesh of forwardPassMeshes) {

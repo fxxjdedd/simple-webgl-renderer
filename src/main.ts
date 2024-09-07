@@ -81,7 +81,7 @@ dirLight.position = new Vec3(5, 5, 5);
 dirLight.target = groundPlaneMesh;
 dirLight.color = new Vec3(1, 1, 1);
 dirLight.intensity = 1.0;
-dirLight.shadow.bias = -0.00005;
+// dirLight.shadow.bias = -0.00005;
 
 /* -------------------------------------------------------------------------- */
 /*                           DeferredDebugMaterials                           */

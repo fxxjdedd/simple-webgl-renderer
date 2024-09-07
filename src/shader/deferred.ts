@@ -15,14 +15,16 @@ export const vertex = /* glsl */ `#version 300 es
 
 	out vec3 v_pos;
 	out vec3 v_normal;
+	out vec3 v_normalView;
 	out vec2 v_uv;
     out vec2 v_fragZW;
 
 	void main() {
 		vec4 worldPos = modelMatrix * vec4(position, 1.0);
 		v_pos = worldPos.xyz;
+		v_normal = normal;
 		// http://www.lighthouse3d.com/tutorials/glsl-12-tutorial/the-normal-matrix/
-		v_normal = normalMatrix * normal;
+		v_normalView = normalMatrix * normal;
 		v_uv = uv;
 		gl_Position = projMatrix * mvMatrix * vec4(position, 1.0);
         v_fragZW = gl_Position.zw;
@@ -35,6 +37,7 @@ export const fragment = /* glsl */ `#version 300 es
 
 	in vec3 v_pos;
 	in vec3 v_normal;
+	in vec3 v_normalView;
 	in vec2 v_uv;
     in vec2 v_fragZW;
 
@@ -65,7 +68,7 @@ export const fragment = /* glsl */ `#version 300 es
 		// texture color is range from 0 to 1, so we must have a conversion
 		g_normal = vec4((mapNormal + 1.0) / 2.0, 1.0);
 #else
-		g_normal = vec4((v_normal + 1.0) / 2.0, 1.0);
+		g_normal = vec4((v_normal+ 1.0) / 2.0, 1.0);
 #endif
 
 #ifdef USE_MAP
