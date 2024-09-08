@@ -41,8 +41,8 @@ export class WebGLRenderer {
             failIfMajorPerformanceCaveat: false,
         }));
         this.programManager = new GL_ProgramManager(gl);
-        this.state = new GL_State(gl);
         this.constantsMapping = new GL_ConstantsMapping(gl);
+        this.state = new GL_State(gl, this.constantsMapping);
         this.textures = new GL_Textures(gl, this.constantsMapping, this.state);
         this.bindingStates = new GL_BindingStates(gl);
         this.clearBits = this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT;
@@ -78,6 +78,7 @@ export class WebGLRenderer {
         const forwardPassMeshes: Mesh[] = [];
 
         if (this.renderState.hasDeferredMesh) {
+            const current = this.currentRenderTarget;
             this.setRenderTarget(this.renderState.getDerferredRenderTarget());
             this.gl.clearColor(0, 0, 0, 1);
             this.clear();
@@ -86,7 +87,7 @@ export class WebGLRenderer {
                 this.renderObject(mesh, defferedMeshDef.geometry, defferedMeshDef.material, camera);
             }
 
-            this.setRenderTarget(null);
+            this.setRenderTarget(current);
 
             this.gl.clearColor(0, 0, 0, 1);
             this.clear();
@@ -190,6 +191,8 @@ export class WebGLRenderer {
                 program.setUniform(name, value);
             }
         }
+
+        this.state.setMaterial(material);
 
         let bindingState: GL_BindingState;
         if (!(bindingState = this.bindingStates.getBindingState(program, geometry))) {

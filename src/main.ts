@@ -12,7 +12,8 @@ import { OBJLoader } from "./loader/OBJLoader";
 import { ScreenPlane } from "./geometry/ScreenPlane";
 import { getAdaptiveAspectRatio } from "./util/texture";
 import { Plane } from "./geometry/Plane";
-import { SSAOEffect } from "./post-effects/SSAOEffect";
+import { SSAOPass } from "./post-effects/SSAOPass";
+import { RenderPass } from "./post-effects/RenderPass";
 const canvas = document.getElementById("webglcanvas") as HTMLCanvasElement;
 const renderer = new WebGLRenderer(canvas);
 const gl = renderer.gl;
@@ -130,21 +131,27 @@ objLoader.onLoad((obj) => {
 /* -------------------------------------------------------------------------- */
 /*                                post-effects                                */
 /* -------------------------------------------------------------------------- */
+const writeBuffer = new WebGLRenderTarget(renderer.viewport.z, renderer.viewport.w);
+const readBuffer = new WebGLRenderTarget(renderer.viewport.z, renderer.viewport.w);
 
-const ssaoEffect = new SSAOEffect(camera, renderer.viewport.z, renderer.viewport.w, 32);
+const ssaoPass = new SSAOPass(camera, renderer.viewport.z, renderer.viewport.w, 32);
+const renderPass = new RenderPass(camera);
 
 /* -------------------------------------------------------------------------- */
 /*                                  run loop                                  */
 /* -------------------------------------------------------------------------- */
 function animate() {
     renderer.enableShadowPass = true;
+    renderer.setRenderTarget(writeBuffer);
     renderer.render(renderScene, camera);
     renderer.enableShadowPass = false;
 
     /* ------------------------- post-effects starts ------------------------- */
-    ssaoEffect.render(renderer);
+    // TODO: support buffer swap, now temproray exchange buffer
+    ssaoPass.render(renderer, readBuffer, writeBuffer);
+    renderPass.render(renderer, null, readBuffer);
 
-    debugMaterial4.map = ssaoEffect.ssaoRenderTarget.texture;
+    debugMaterial4.map = ssaoPass.ssaoRenderTarget.texture;
     /* -------------------------- post-effects ends -------------------------- */
 
     const blockSize = canvas.height / 5;

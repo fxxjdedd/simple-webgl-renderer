@@ -37,6 +37,7 @@ export class GL_Deferred {
 
         for (const mesh of meshes) {
             const deferredMaterial = new DeferredMaterial();
+            deferredMaterial.blending.enabled = false;
             deferredMaterial.uniforms = mesh.material.uniforms;
             this.deferredMeshes.set(mesh, {
                 geometry: mesh.geometry,

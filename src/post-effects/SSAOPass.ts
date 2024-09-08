@@ -5,27 +5,47 @@ import { lerp } from "../util/math";
 import { Camera, Mesh, Scene } from "../core/core";
 import { ShaderMaterial } from "../materials/ShaderMaterial";
 import * as ssaoShader from "../shader/post-effects/ssao";
+import * as copyShader from "../shader/copy";
 import { ScreenPlane } from "../geometry/ScreenPlane";
 import { DataTexture } from "../textures/DataTexture";
-import { FloatType, HalfFloatType, RGBAFormat, RGBFormat, UnsignedIntType } from "../constants";
+import {
+    AddEquation,
+    DstAlphaFactor,
+    DstColorFactor,
+    FloatType,
+    HalfFloatType,
+    RGBAFormat,
+    RGBFormat,
+    UnsignedIntType,
+    ZeroFactor,
+} from "../constants";
 
-export class SSAOEffect {
+export class SSAOPass {
     kernels: Vec3[];
     noises: Float32Array;
 
+    screenMesh: Mesh;
+    screen: Scene;
+
     ssaoRenderTarget: WebGLRenderTarget;
     blurRenderTarget: WebGLRenderTarget;
+    copyRenderTarget: WebGLRenderTarget; // TODO: abstract as readBuffer/writeBuffer
 
     ssaoMaterial: ShaderMaterial;
     blurMaterial: ShaderMaterial;
+    copyMaterial: ShaderMaterial;
 
     constructor(private camera: Camera, private width: number, private height: number, private kernelSize = 32) {
         this.kernels = this.generateSamplerKernel(this.kernelSize);
         const noiseResolution = 256;
         this.noises = this.generateSimpleNoises(noiseResolution);
 
+        this.screenMesh = new Mesh(new ScreenPlane(), null);
+        this.screen = new Scene([this.screenMesh]); // TODO: let renderer support mesh directly
+
         this.ssaoRenderTarget = new WebGLRenderTarget(this.width, this.height);
         this.blurRenderTarget = new WebGLRenderTarget(this.width, this.height);
+        this.copyRenderTarget = new WebGLRenderTarget(this.width, this.height);
 
         this.ssaoMaterial = new ShaderMaterial({
             vertexShader: ssaoShader.vertex,
@@ -50,14 +70,41 @@ export class SSAOEffect {
             vertexShader: "",
             fragmentShader: "",
         });
-    }
-    render(renderer: WebGLRenderer) {
-        const screenPlane = new ScreenPlane();
-        const ssaoMesh = new Mesh(screenPlane, this.ssaoMaterial);
-        const ssaoScene = new Scene([ssaoMesh]);
 
+        this.copyMaterial = new ShaderMaterial({
+            vertexShader: copyShader.vertex,
+            fragmentShader: copyShader.fragment,
+        });
+        this.copyMaterial.blending = {
+            enabled: false,
+            blendSrc: DstColorFactor,
+            blendDst: ZeroFactor,
+            blendSrcAlpha: DstAlphaFactor,
+            blendDstAlpha: ZeroFactor,
+            blendEquation: AddEquation,
+            blendEquationAlpha: AddEquation,
+        };
+    }
+    render(renderer: WebGLRenderer, writeBuffer: WebGLRenderTarget, readBuffer: WebGLRenderTarget) {
+        // render ssao and blur texture
+        this.screenMesh.material = this.ssaoMaterial;
+        this.screenMesh.material.blending.enabled = false;
         renderer.setRenderTarget(this.ssaoRenderTarget);
-        renderer.render(ssaoScene, this.camera);
+        renderer.render(this.screen, this.camera);
+
+        // copy current screen pixels to final target
+        this.screenMesh.material = this.copyMaterial;
+        this.screenMesh.material.map = readBuffer.texture;
+        this.screenMesh.material.blending.enabled = false;
+        renderer.setRenderTarget(writeBuffer);
+        renderer.render(this.screen, this.camera);
+
+        // blend ssao and blur texture on final target
+        this.screenMesh.material.map = this.ssaoRenderTarget.texture;
+        this.screenMesh.material.blending.enabled = true;
+        renderer.setRenderTarget(writeBuffer);
+        renderer.render(this.screen, this.camera);
+
         renderer.setRenderTarget(null);
     }
 

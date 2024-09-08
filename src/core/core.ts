@@ -2,10 +2,20 @@ import { Vec3, Mat3, Mat4, Quat, Vec4 } from "gl-matrix";
 import { BufferLayout, StructuredData, TypedArrayCode } from "../util";
 import { DEG2RAD } from "../util/math";
 import { Texture } from "./texture";
-import { calcBBox } from "../util/boundary";
-import { ObjectSpaceNormalMap } from "../constants";
+import { AddEquation, OneMinusSrcAlphaFactor, SrcAlphaFactor } from "../constants";
 
+interface MaterialBlending {
+    enabled: boolean;
+    blendEquation: number;
+    blendEquationAlpha: number;
+    blendSrc: number;
+    blendDst: number;
+    blendSrcAlpha: number;
+    blendDstAlpha: number;
+}
 class Material {
+    blending: Partial<MaterialBlending>;
+
     private _map: Texture;
     private _normalMap: Texture;
     set map(v: Texture) {
@@ -32,7 +42,17 @@ class Material {
 
     enableDeferredRendering = false;
 
-    constructor(public name: string) {}
+    constructor(public name: string) {
+        this.blending = {
+            enabled: true,
+            blendEquation: AddEquation,
+            blendEquationAlpha: null,
+            blendSrc: SrcAlphaFactor,
+            blendDst: OneMinusSrcAlphaFactor,
+            blendSrcAlpha: null,
+            blendDstAlpha: null,
+        };
+    }
 }
 class Geometry<T extends BufferLayout = BufferLayout> {
     index: number[] | null;
