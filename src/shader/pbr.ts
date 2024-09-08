@@ -1,4 +1,4 @@
-import packing from "./chunks/packing";
+import packingChunk from "./chunks/packing";
 
 export const vertex = /* glsl */ `#version 300 es
 	precision highp float;
@@ -114,7 +114,7 @@ export const fragment = /* glsl */ `#version 300 es
 	uniform sampler2D dirLightShadowMap;
 	uniform mat4 dirLightShadowMatrix;
 
-	${packing}
+	${packingChunk}
 
 	float shadowCompare(vec3 pos) {
 		vec4 posShadow = dirLightShadowMatrix * vec4(pos, 1.0);

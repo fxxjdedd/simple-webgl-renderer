@@ -4,7 +4,7 @@ import { Light } from "../core/light";
 import { WebGLRenderer } from "../core/renderer";
 import { GL_Deferred } from "./glDeferred";
 import { GL_Lights } from "./glLights";
-import { DepthTexture } from "../textures/depthTexture";
+import { DepthTexture } from "../textures/DepthTexture";
 import { WebGLRenderTarget } from "../core/renderTarget";
 
 export class GL_RenderState {

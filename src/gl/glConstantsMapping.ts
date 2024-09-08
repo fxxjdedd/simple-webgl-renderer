@@ -1,6 +1,8 @@
 import {
     ClampToEdgeWrapping,
     DepthFormat,
+    FloatType,
+    HalfFloatType,
     LinearFilter,
     NearestFilter,
     RGBAFormat,
@@ -28,6 +30,8 @@ export class GL_ConstantsMapping {
             // type
             [UnsignedByteType]: gl.UNSIGNED_BYTE,
             [UnsignedIntType]: gl.UNSIGNED_INT,
+            [HalfFloatType]: gl.HALF_FLOAT,
+            [FloatType]: gl.FLOAT,
         };
     }
 

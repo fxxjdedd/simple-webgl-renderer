@@ -1,6 +1,6 @@
 import { Vec3, Mat4, Quat, Vec4, Mat3 } from "gl-matrix";
 import { GL_Program } from "../gl/glProgram";
-import { Camera, Geometry, Material, Mesh, Object3D, Scene } from "./core";
+import { Camera, Geometry, Material, Mesh, Object3D, OrthoCamera, PerspectiveCamera, Scene } from "./core";
 import { GL_BindingState, GL_BindingStates } from "../gl/glBindingStates";
 import { WebGLRenderTarget } from "./renderTarget";
 import { GL_State } from "../gl/glState";
@@ -10,7 +10,7 @@ import { GL_Textures } from "../gl/glTextures";
 import { Texture } from "./texture";
 import { GL_ConstantsMapping } from "../gl/glConstantsMapping";
 import { GL_ProgramManager } from "../gl/glProgramManager";
-import { DepthTexture } from "../textures/depthTexture";
+import { DepthTexture } from "../textures/DepthTexture";
 import { GL_ShadowDepthPass } from "../gl/pass/glShadowDepthPass";
 import { ShaderMaterial } from "../materials/ShaderMaterial";
 
@@ -134,6 +134,18 @@ export class WebGLRenderer {
             }
         }
 
+        if (camera instanceof PerspectiveCamera) {
+            defines["PERSPECTIVE_CAMERA"] = 1;
+        } else if (camera instanceof OrthoCamera) {
+            defines["ORTHOGRAPHIC_CAMERA"] = 1;
+        } else {
+            throw new Error("Not supported camera type: " + camera.constructor.name);
+        }
+
+        if (material instanceof ShaderMaterial) {
+            Object.assign(defines, material.defines);
+        }
+
         const program = this.programManager.getProgram(material, defines);
         if (!program) {
             throw new Error("No properly program found for material: " + material.name);
@@ -159,7 +171,7 @@ export class WebGLRenderer {
             program.setUniform("dirLightShadowMatrix", this.renderState.lights.dirLightShadowMatrixs[0]);
         }
 
-        if (material.enableDeferredRendering) {
+        if (material.enableDeferredRendering || material instanceof ShaderMaterial) {
             const gbuffer = this.renderState.getDeferredGBuffer();
             material.uniforms["g_diffuse"] = gbuffer.diffuse;
             material.uniforms["g_normal"] = gbuffer.normal;
@@ -168,10 +180,13 @@ export class WebGLRenderer {
         }
 
         for (const name in material.uniforms) {
-            const value = material.uniforms[name];
+            let value = material.uniforms[name];
             if (value instanceof Texture) {
                 program.setUniform(name, value, this.textures);
             } else {
+                if (typeof value == "object" && "value" in value) {
+                    value = value.value;
+                }
                 program.setUniform(name, value);
             }
         }

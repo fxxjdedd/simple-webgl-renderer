@@ -1,4 +1,4 @@
-import packing from "./chunks/packing";
+import packingChunk from "./chunks/packing";
 
 export const vertex = /* glsl */ `#version 300 es
     precision highp float;
@@ -54,7 +54,7 @@ export const fragment = /* glsl */ `#version 300 es
 	uniform mat4 viewMatrix;
 	uniform mat4 projMatrix;
 
-	${packing}
+	${packingChunk}
 
 	void main() {
 

@@ -1,4 +1,4 @@
-import packing from "./chunks/packing";
+import packingChunk from "./chunks/packing";
 
 export const vertex = /* glsl */ `#version 300 es
     precision highp float;
@@ -40,7 +40,7 @@ export const fragment = /* glsl */ `#version 300 es
 
     layout(location = 0) out vec4 depthColor; // cause renderTarget must have at least one color texture
 
-    ${packing}
+    ${packingChunk}
 
 	void main() {
         // comment cause not need at now

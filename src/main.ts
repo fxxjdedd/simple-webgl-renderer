@@ -3,7 +3,7 @@ import { Geometry, Mesh, OrthoCamera, PerspectiveCamera, Scene } from "./core/co
 import { BoxGeometry } from "./geometry/BoxGeometry";
 import { WebGLRenderer } from "./core/renderer";
 import { WebGLRenderTarget } from "./core/renderTarget";
-import { DepthTexture } from "./textures/depthTexture";
+import { DepthTexture } from "./textures/DepthTexture";
 import { Vec3, Vec4 } from "gl-matrix";
 import { DirectionalLight } from "./core/light";
 import { DebugMaterial, DeferredDebugMaterial, DeferredMaterial, PBRMaterial } from "./materials";
@@ -81,7 +81,7 @@ dirLight.position = new Vec3(5, 5, 5);
 dirLight.target = groundPlaneMesh;
 dirLight.color = new Vec3(1, 1, 1);
 dirLight.intensity = 1.0;
-// dirLight.shadow.bias = -0.00005;
+dirLight.shadow.bias = -0.00005;
 
 /* -------------------------------------------------------------------------- */
 /*                           DeferredDebugMaterials                           */
@@ -105,7 +105,7 @@ debugMaterial2.map = gBufferRenderTarget.textures[1];
 debugMaterial2.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
 // debugMaterial3.map = dirLight.shadow.map.texture;
 debugMaterial3.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
-debugMaterial4.map = gBufferRenderTarget.textures[2];
+// debugMaterial4.map = gBufferRenderTarget.textures[2];
 debugMaterial4.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
 
 /* -------------------------------------------------------------------------- */
@@ -132,7 +132,7 @@ objLoader.onLoad((obj) => {
 /*                                post-effects                                */
 /* -------------------------------------------------------------------------- */
 
-// const ssaoEffect = new SSAOEffect(camera, gBufferRenderTarget, renderer.viewport.z, renderer.viewport.w, 32);
+const ssaoEffect = new SSAOEffect(camera, renderer.viewport.z, renderer.viewport.w, 32);
 
 /* -------------------------------------------------------------------------- */
 /*                                  run loop                                  */
@@ -144,8 +144,9 @@ function animate() {
     renderer.enableShadowPass = false;
 
     /* ------------------------- post-effects starts ------------------------- */
-    // ssaoEffect.render(renderer);
+    ssaoEffect.render(renderer);
 
+    debugMaterial4.map = ssaoEffect.ssaoRenderTarget.texture;
     /* -------------------------- post-effects ends -------------------------- */
 
     const blockSize = canvas.height / 5;

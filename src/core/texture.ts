@@ -3,6 +3,7 @@ import { ClampToEdgeWrapping, LinearFilter, RGBAFormat, RepeatWrapping, Unsigned
 export interface TextureImage {
     width: number;
     height: number;
+    data?: ArrayBufferView;
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Using_textures_in_WebGL

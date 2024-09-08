@@ -1,4 +1,5 @@
 import { Texture } from "../core/texture";
+import { DataTexture } from "../textures/DataTexture";
 import { GL_ConstantsMapping } from "./glConstantsMapping";
 import { GL_State } from "./glState";
 
@@ -45,9 +46,22 @@ export class GL_Textures {
             if (texture.image != null) {
                 const { width, height } = texture.image;
                 const { wrapS, wrapT, magFilter, minFilter, format, type } = this.getGLTextureParams(texture.param);
-                // temprorary code
-                const internalFormat = texture.isDepthTexture ? gl.DEPTH_COMPONENT16 : format;
-                gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, null);
+                if (texture instanceof DataTexture) {
+                    // TODO: precisure internalFormat, see three.js WebGLTexture getInternalFormat function
+                    let internalFormat = format;
+                    if (format === gl.RGBA) {
+                        if (type === gl.HALF_FLOAT) {
+                            internalFormat = gl.RGBA16F;
+                        } else if (type === gl.FLOAT) {
+                            internalFormat = gl.RGBA32F;
+                        }
+                    }
+                    gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, texture.image.data);
+                } else {
+                    // TODO: precisure internalFormat
+                    const internalFormat = texture.isDepthTexture ? gl.DEPTH_COMPONENT16 : format;
+                    gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, null);
+                }
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrapS);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrapT);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minFilter);
