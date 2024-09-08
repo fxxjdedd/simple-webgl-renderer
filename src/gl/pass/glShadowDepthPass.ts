@@ -16,6 +16,7 @@ export class GL_ShadowDepthPass {
                     enableDepthBuffer: true, // must set true so that depth test could work
                 });
             }
+
             this.renderer.setRenderTarget(light.shadow.map);
             const gl = this.renderer.gl;
             gl.clearColor(1, 1, 1, 1); // set clear color to white so that shadow map always safe for non-recevie-shadow objects
@@ -36,6 +37,7 @@ export class GL_ShadowDepthPass {
                 Mat4.multiply(object.mvMatrix, shadowCamera.matrixWorldInv, object.matrixWorld);
                 // TODO: cache depthMaterial
                 const depthMaterial = new DepthMaterial();
+                depthMaterial.blending.enabled = false;
 
                 if (object.receiveShadow) {
                     gl.cullFace(gl.FRONT);
