@@ -103,9 +103,8 @@ debugMaterial1.map = gBufferRenderTarget.textures[0];
 debugMaterial1.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
 debugMaterial2.map = gBufferRenderTarget.textures[1];
 debugMaterial2.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
-// debugMaterial3.map = dirLight.shadow.map.texture;
+debugMaterial3.map = gBufferRenderTarget.textures[2];
 debugMaterial3.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
-// debugMaterial4.map = gBufferRenderTarget.textures[2];
 debugMaterial4.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
 
 /* -------------------------------------------------------------------------- */
@@ -140,7 +139,6 @@ const ssaoEffect = new SSAOEffect(camera, renderer.viewport.z, renderer.viewport
 function animate() {
     renderer.enableShadowPass = true;
     renderer.render(renderScene, camera);
-    debugMaterial3.map = dirLight.shadow.map.texture;
     renderer.enableShadowPass = false;
 
     /* ------------------------- post-effects starts ------------------------- */

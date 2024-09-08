@@ -69,14 +69,14 @@ export const fragment = /* glsl */ `#version 300 es
         for (int i = 0; i < KERNEL_SIZE_TEMP; i++) {
             vec3 samplerDir = tbnMatrix * kernels[i];
             vec3 samplerPos = posView + (samplerDir * kernelRadius);
-            vec4 samplerPosInClip = projMatrix * mvMatrix * vec4(samplerPos, 1.0);
+            vec4 samplerPosInClip = projMatrix * vec4(samplerPos, 1.0);
             vec3 samplerPosInNDC = samplerPosInClip.xyz/samplerPosInClip.w;
 
             vec3 samplerPosInUV = samplerPosInNDC.xyz * 0.5 + 0.5;
             float samplerDepth = samplerPosInUV.z;
             float samplerLinearDepth = toLinearDepth(samplerDepth);
 
-		    float sampledFragDepth = unpackRGBAToDepth(texture(g_depth, uv));
+		    float sampledFragDepth = unpackRGBAToDepth(texture(g_depth, samplerPosInUV.xy));
             // TODO: support ortho proj
             float sampledFragDepthLinear = toLinearDepth(sampledFragDepth);
             
@@ -90,5 +90,7 @@ export const fragment = /* glsl */ `#version 300 es
 
         occlusion = clamp((occlusion / float(KERNEL_SIZE_TEMP)), 0.0, 1.0);
         fragColor = vec4(vec3(1.0 - occlusion), 1.0);
+
 	}
+
 `;

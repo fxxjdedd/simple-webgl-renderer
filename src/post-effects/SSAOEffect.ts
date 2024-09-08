@@ -34,10 +34,10 @@ export class SSAOEffect {
             uniforms: ssaoShader.getUniforms(),
         });
 
-        this.ssaoMaterial.uniforms["kernel"] = { value: this.kernels };
-        this.ssaoMaterial.uniforms["kernelRadius"] = { value: 8 };
+        this.ssaoMaterial.uniforms["kernels"] = { value: this.kernels };
+        this.ssaoMaterial.uniforms["kernelRadius"] = { value: 0.1 };
         this.ssaoMaterial.uniforms["minDistance"] = { value: 0.0001 };
-        this.ssaoMaterial.uniforms["maxDistance"] = { value: 0.005 };
+        this.ssaoMaterial.uniforms["maxDistance"] = { value: 0.05 };
         this.ssaoMaterial.uniforms["noiseMap"] = new DataTexture(
             this.noises,
             noiseResolution,
@@ -95,12 +95,9 @@ export class SSAOEffect {
             const x2 = Math.random() * 2 - 1;
             const y2 = Math.random() * 2 - 1;
 
-            const x3 = Math.random() * 2 - 1;
-            const y3 = Math.random() * 2 - 1;
-
             noises[i] = Math.sqrt(x1 * x1 + y1 * y1);
             noises[i + 1] = Math.sqrt(x2 * x2 + y2 * y2);
-            noises[i + 2] = Math.sqrt(x3 * x3 + y3 * y3);
+            noises[i + 2] = 1.0;
             noises[i + 3] = 1.0;
         }
 
