@@ -1,9 +1,11 @@
+import { Material } from "../core/core";
 import { WebGLRenderTarget } from "../core/renderTarget";
+import { GL_ConstantsMapping } from "./glConstantsMapping";
 import { GL_FrameBuffer } from "./glFrameBuffer";
 
 // only change webgl state here
 export class GL_State {
-    constructor(private gl: WebGL2RenderingContext) {
+    constructor(private gl: WebGL2RenderingContext, private constantsMapping: GL_ConstantsMapping) {
         this.gl.clearColor(0, 0, 0, 1);
         // NOTE: depth is not linear, see: https://learnopengl.com/Advanced-OpenGL/Depth-testing
         this.gl.clearDepth(1);
@@ -33,6 +35,33 @@ export class GL_State {
             gl.drawBuffers(attaches);
         } else {
             gl.drawBuffers([gl.BACK]);
+        }
+    }
+
+    setMaterial(material: Material) {
+        const gl = this.gl;
+
+        // TODO: consider transparent
+        if (material.blending != null && material.blending.enabled) {
+            let { blendDst, blendDstAlpha, blendEquation, blendEquationAlpha, blendSrc, blendSrcAlpha } =
+                material.blending;
+
+            blendSrcAlpha = blendSrcAlpha || blendSrc;
+            blendDstAlpha = blendDstAlpha || blendDst;
+            blendEquationAlpha = blendEquationAlpha || blendEquation;
+
+            const mapping = this.constantsMapping;
+
+            gl.enable(gl.BLEND);
+            gl.blendEquationSeparate(mapping.getGLConstant(blendEquation), mapping.getGLConstant(blendEquationAlpha));
+            gl.blendFuncSeparate(
+                mapping.getGLConstant(blendSrc),
+                mapping.getGLConstant(blendDst),
+                mapping.getGLConstant(blendSrcAlpha),
+                mapping.getGLConstant(blendDstAlpha)
+            );
+        } else {
+            gl.disable(gl.BLEND);
         }
     }
 }

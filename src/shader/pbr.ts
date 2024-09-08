@@ -1,4 +1,4 @@
-import packing from "./chunks/packing";
+import packingChunk from "./chunks/packing";
 
 export const vertex = /* glsl */ `#version 300 es
 	precision highp float;
@@ -114,14 +114,13 @@ export const fragment = /* glsl */ `#version 300 es
 	uniform sampler2D dirLightShadowMap;
 	uniform mat4 dirLightShadowMatrix;
 
-	${packing}
+	${packingChunk}
 
 	float shadowCompare(vec3 pos) {
 		vec4 posShadow = dirLightShadowMatrix * vec4(pos, 1.0);
 
 		vec3 posShadowNDC = posShadow.xyz / posShadow.w;
-		vec3 posShadowUV = (posShadowNDC + 1.0) / 2.0;
-		// vec3 posShadowUV = posShadowNDC*0.5 + 0.5;
+		vec3 posShadowUV = posShadowNDC*0.5 + 0.5;
 
 		if (posShadowUV.x > 1.0 || posShadowUV.y > 1.0 || posShadowUV.x < 0.0 || posShadowUV.y < 0.0){
 			return 1.0;
@@ -151,12 +150,11 @@ export const fragment = /* glsl */ `#version 300 es
 
 		vec3 diffuse = texture(g_diffuse, uv).xyz;
 		vec3 normal = texture(g_normal, uv).xyz * 2.0 - 1.0;
-		float depth = texture(g_depth, uv).r;
+		float depth = unpackRGBAToDepth(texture(g_depth, uv));
 
 		vec3 ndc = vec3(uv, depth) * 2.0 - 1.0;
-		vec4 posHomo = (inverse(projMatrix * viewMatrix) * vec4(ndc, 1.0));
-		vec3 pos = (posHomo/posHomo.w).xyz;
-		vec3 posView = (viewMatrix * vec4(pos, 1.0)).xyz;
+		vec4 posHomo = (inverse(projMatrix) * vec4(ndc, 1.0));
+		vec3 posMainView = (posHomo/posHomo.w).xyz; // calculate in main-camera view-space
 
 		BRDFOutLight outLight;
 
@@ -171,11 +169,12 @@ export const fragment = /* glsl */ `#version 300 es
 		pbrMaterial.roughness += geometryRoughness;
 		pbrMaterial.roughness = min( pbrMaterial.roughness, 1.0 );
 
-		vec3 Wi = dirLight.direction;
-		vec3 Wo = inverse(viewMatrix)[3].xyz - pos;
-		float dtLN = clamp(dot(normal, normalize(dirLight.direction)), 0.0, 1.0);
+		vec3 Wi = normalize((viewMatrix * vec4(dirLight.direction, 1.0)).xyz);
+		vec3 Wo = -normalize(posMainView);
+		float dtLN = clamp(dot(normal, normalize(Wi)), 0.0, 1.0);
 
-		vec3 shadowWorldPos = pos + normal * dirLightShadow.shadowNormalBias;
+		vec3 shadowMainViewPos = posMainView + normal * dirLightShadow.shadowNormalBias;
+		vec3 shadowWorldPos = (inverse(viewMatrix) * vec4(shadowMainViewPos, 1.0)).xyz;
 		float shadowFactor = shadowCompare(shadowWorldPos);
 
 		vec3 directLightColor = dirLight.color * shadowFactor;
@@ -185,7 +184,7 @@ export const fragment = /* glsl */ `#version 300 es
 
 		// direct lighting
 		outLight.diffuseColor += Li * BRDF_DiffusePart(pbrMaterial.diffuseColor);
-		outLight.specularColor += Li * BRDF_SpecularPart(pos, Wo, Wi, normal, pbrMaterial);
+		outLight.specularColor += Li * BRDF_SpecularPart(posMainView, Wo, Wi, normal, pbrMaterial);
 
 		// indirect lighting
 		vec3 ambient = vec3(1.0,1.0,1.0);

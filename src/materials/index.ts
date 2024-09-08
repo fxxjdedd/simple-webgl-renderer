@@ -27,11 +27,9 @@ export class DebugMaterial extends Material {
 export class PBRMaterial extends Material {
     // TODO:
     // static name = "PBRMaterial";
-    metalness: number = 0;
-    roughness: number = 1;
-    color = new Vec4(1, 1, 1, 1);
     constructor() {
         super("PBRMaterial");
+        this.enableDeferredRendering = true;
     }
 }
 

@@ -3,7 +3,7 @@ import { Geometry, Mesh, OrthoCamera, PerspectiveCamera, Scene } from "./core/co
 import { BoxGeometry } from "./geometry/BoxGeometry";
 import { WebGLRenderer } from "./core/renderer";
 import { WebGLRenderTarget } from "./core/renderTarget";
-import { DepthTexture } from "./textures/depthTexture";
+import { DepthTexture } from "./textures/DepthTexture";
 import { Vec3, Vec4 } from "gl-matrix";
 import { DirectionalLight } from "./core/light";
 import { DebugMaterial, DeferredDebugMaterial, DeferredMaterial, PBRMaterial } from "./materials";
@@ -12,6 +12,8 @@ import { OBJLoader } from "./loader/OBJLoader";
 import { ScreenPlane } from "./geometry/ScreenPlane";
 import { getAdaptiveAspectRatio } from "./util/texture";
 import { Plane } from "./geometry/Plane";
+import { SSAOPass } from "./post-effects/SSAOPass";
+import { RenderPass } from "./post-effects/RenderPass";
 const canvas = document.getElementById("webglcanvas") as HTMLCanvasElement;
 const renderer = new WebGLRenderer(canvas);
 const gl = renderer.gl;
@@ -20,12 +22,12 @@ const gl = renderer.gl;
 /*                                 Geometries                                 */
 /* -------------------------------------------------------------------------- */
 
-// const objLoader1 = new OBJLoader();
-const objLoader2 = new OBJLoader();
-// const cube = objLoader1.load("/3d-models/cube.obj");
-const bunny = objLoader2.load("/3d-models/stanford-bunny.obj");
+const objLoader = new OBJLoader();
+// const cube = objLoader.load("/3d-models/cube.obj");
+// const bunny = objLoader.load("/3d-models/stanford-bunny.obj");
+const rockerArm = objLoader.load("/3d-models/rocker-arm.obj");
 
-const geometryPassGeometry = bunny;
+const geometryPassGeometry = rockerArm;
 const screenPlane = new ScreenPlane();
 const groundPlane = new Plane();
 
@@ -52,55 +54,34 @@ const orbitControl = new OrbitControl(renderer, camera);
 orbitControl.setupEventListeners();
 
 /* -------------------------------------------------------------------------- */
-/*                              DeferredMaterials                             */
+/*                                PBRMaterials                                */
 /* -------------------------------------------------------------------------- */
-
-const deferredMaterial = new DeferredMaterial();
-const geometryPassMesh = new Mesh(geometryPassGeometry, deferredMaterial);
-geometryPassMesh.castShadow = true;
 
 const diffuseMap = new TextureLoader().load("/textures/ganges_river_pebbles_1k/ganges_river_pebbles_diff_1k.jpg");
 const normalMap = new TextureLoader().load("/textures/ganges_river_pebbles_1k/ganges_river_pebbles_nor_gl_1k.png");
 
-const deferredMaterial4Plane = new DeferredMaterial();
-deferredMaterial4Plane.map = diffuseMap;
-deferredMaterial4Plane.normalMap = normalMap;
-const geometryPassMesh4Plane = new Mesh(groundPlane, deferredMaterial4Plane);
-geometryPassMesh4Plane.receiveShadow = true;
+// plane
+const pbrMaterial4Plane = new PBRMaterial();
+pbrMaterial4Plane.map = diffuseMap;
+pbrMaterial4Plane.normalMap = normalMap;
+const groundPlaneMesh = new Mesh(groundPlane, pbrMaterial4Plane);
+groundPlaneMesh.receiveShadow = true;
 const scale = 2;
-geometryPassMesh4Plane.scale.set(Array(3).fill(scale));
+groundPlaneMesh.scale.set(Array(3).fill(scale));
 
-const depthTexture = new DepthTexture(gl);
-
-const renderTarget = new WebGLRenderTarget(
-    canvas.width * window.devicePixelRatio,
-    canvas.height * window.devicePixelRatio,
-    {
-        enableDepthBuffer: true,
-        depthTexture: depthTexture,
-        colorsCount: 2,
-    }
-);
-
-/* -------------------------------------------------------------------------- */
-/*                                PBRMaterials                                */
-/* -------------------------------------------------------------------------- */
-const pbrMaterial = new PBRMaterial();
-const lightingPassMesh = new Mesh(screenPlane, pbrMaterial);
-pbrMaterial.uniforms = {
-    g_diffuse: renderTarget.textures[0],
-    g_normal: renderTarget.textures[1],
-    g_depth: depthTexture,
-    metalness: 0.0,
-    roughness: 1.0,
-};
+// model
+const pbrMaterial4Model = new PBRMaterial();
+const modelMesh = new Mesh(geometryPassGeometry, pbrMaterial4Model);
+modelMesh.receiveShadow = true;
+pbrMaterial4Model.uniforms.metalness = 0.0;
+pbrMaterial4Model.uniforms.roughness = 1.0;
 
 const dirLight = new DirectionalLight();
 dirLight.castShadow = true;
 dirLight.position = new Vec3(5, 5, 5);
-dirLight.target = geometryPassMesh4Plane;
+dirLight.target = groundPlaneMesh;
 dirLight.color = new Vec3(1, 1, 1);
-dirLight.intensity = 3.0;
+dirLight.intensity = 1.0;
 dirLight.shadow.bias = -0.00005;
 
 /* -------------------------------------------------------------------------- */
@@ -116,23 +97,22 @@ const debug2 = new Mesh(screenPlane, debugMaterial2);
 const debug3 = new Mesh(screenPlane, debugMaterial3);
 const debug4 = new Mesh(screenPlane, debugMaterial4);
 
-const adaptiveAspectRatio = getAdaptiveAspectRatio(renderTarget.width, renderTarget.height);
+const gBufferRenderTarget = renderer.renderState.getDerferredRenderTarget();
+const adaptiveAspectRatio = getAdaptiveAspectRatio(gBufferRenderTarget.width, gBufferRenderTarget.height);
 
-debugMaterial1.map = renderTarget.textures[0];
+debugMaterial1.map = gBufferRenderTarget.textures[0];
 debugMaterial1.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
-debugMaterial2.map = renderTarget.textures[1];
+debugMaterial2.map = gBufferRenderTarget.textures[1];
 debugMaterial2.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
-// debugMaterial3.map = dirLight.shadow.map.texture;
+debugMaterial3.map = gBufferRenderTarget.textures[2];
 debugMaterial3.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
-debugMaterial4.map = depthTexture;
 debugMaterial4.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
 
 /* -------------------------------------------------------------------------- */
 /*                                   Scenes                                   */
 /* -------------------------------------------------------------------------- */
 
-const deferredScene = new Scene([geometryPassMesh, geometryPassMesh4Plane, dirLight]);
-const renderScene = new Scene([lightingPassMesh, dirLight]);
+const renderScene = new Scene([groundPlaneMesh, modelMesh, dirLight]);
 
 const viewportScene1 = new Scene([debug1]);
 const viewportScene2 = new Scene([debug2]);
@@ -142,28 +122,37 @@ const viewportScene4 = new Scene([debug4]);
 /* -------------------------------------------------------------------------- */
 /*                               event handlers                               */
 /* -------------------------------------------------------------------------- */
-objLoader2.onLoad((obj) => {
-    const scale = 5;
-    geometryPassMesh.scale.set([scale, scale, scale]);
-    geometryPassMesh.alignToBBox(obj.bbox, "bottom");
+objLoader.onLoad((obj) => {
+    // const scale = 5;
+    // geometryPassMesh.scale.set([scale, scale, scale]);
+    modelMesh.alignToBBox(obj.bbox, "bottom");
 });
+
+/* -------------------------------------------------------------------------- */
+/*                                post-effects                                */
+/* -------------------------------------------------------------------------- */
+const writeBuffer = new WebGLRenderTarget(renderer.viewport.z, renderer.viewport.w);
+const readBuffer = new WebGLRenderTarget(renderer.viewport.z, renderer.viewport.w);
+
+const ssaoPass = new SSAOPass(camera, renderer.viewport.z, renderer.viewport.w, 32);
+const renderPass = new RenderPass(camera);
 
 /* -------------------------------------------------------------------------- */
 /*                                  run loop                                  */
 /* -------------------------------------------------------------------------- */
 function animate() {
     renderer.enableShadowPass = true;
-
-    renderer.setRenderTarget(renderTarget);
-    renderer.render(deferredScene, camera);
-
-    debugMaterial3.map = dirLight.shadow.map.texture;
-
-    renderer.setRenderTarget(null);
-
+    renderer.setRenderTarget(writeBuffer);
+    renderer.render(renderScene, camera);
     renderer.enableShadowPass = false;
 
-    renderer.render(renderScene, camera);
+    /* ------------------------- post-effects starts ------------------------- */
+    // TODO: support buffer swap, now temproray exchange buffer
+    ssaoPass.render(renderer, readBuffer, writeBuffer);
+    renderPass.render(renderer, null, readBuffer);
+
+    debugMaterial4.map = ssaoPass.ssaoRenderTarget.texture;
+    /* -------------------------- post-effects ends -------------------------- */
 
     const blockSize = canvas.height / 5;
     renderer.setViewport(0, 0, blockSize, blockSize);

@@ -1,6 +1,6 @@
 import { Vec3, Mat4, Quat, Vec4, Mat3 } from "gl-matrix";
 import { GL_Program } from "../gl/glProgram";
-import { Camera, Geometry, Material, Mesh, Object3D, Scene } from "./core";
+import { Camera, Geometry, Material, Mesh, Object3D, OrthoCamera, PerspectiveCamera, Scene } from "./core";
 import { GL_BindingState, GL_BindingStates } from "../gl/glBindingStates";
 import { WebGLRenderTarget } from "./renderTarget";
 import { GL_State } from "../gl/glState";
@@ -10,8 +10,9 @@ import { GL_Textures } from "../gl/glTextures";
 import { Texture } from "./texture";
 import { GL_ConstantsMapping } from "../gl/glConstantsMapping";
 import { GL_ProgramManager } from "../gl/glProgramManager";
-import { DepthTexture } from "../textures/depthTexture";
+import { DepthTexture } from "../textures/DepthTexture";
 import { GL_ShadowDepthPass } from "../gl/pass/glShadowDepthPass";
+import { ShaderMaterial } from "../materials/ShaderMaterial";
 
 export class WebGLRenderer {
     gl: WebGL2RenderingContext;
@@ -40,13 +41,13 @@ export class WebGLRenderer {
             failIfMajorPerformanceCaveat: false,
         }));
         this.programManager = new GL_ProgramManager(gl);
-        this.state = new GL_State(gl);
         this.constantsMapping = new GL_ConstantsMapping(gl);
+        this.state = new GL_State(gl, this.constantsMapping);
         this.textures = new GL_Textures(gl, this.constantsMapping, this.state);
         this.bindingStates = new GL_BindingStates(gl);
         this.clearBits = this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT;
         this.viewport = new Vec4(0, 0, this.canvas.width, this.canvas.height);
-        this.renderState = new GL_RenderState();
+        this.renderState = new GL_RenderState(gl, this.viewport);
         this.shadowDepthPass = new GL_ShadowDepthPass(this);
     }
 
@@ -59,6 +60,10 @@ export class WebGLRenderer {
             if (obj instanceof Light) {
                 obj.updateMatrixWorld();
                 this.renderState.addLight(obj);
+            } else if (obj instanceof Mesh) {
+                if (obj.material.enableDeferredRendering) {
+                    this.renderState.addDeferredMesh(obj);
+                }
             }
         }
 
@@ -70,13 +75,37 @@ export class WebGLRenderer {
 
         this.renderState.setup();
 
-        this.gl.clearColor(0, 0, 0, 1);
-        this.clear();
+        const forwardPassMeshes: Mesh[] = [];
 
-        for (const obj of scene.children) {
-            if (obj instanceof Mesh) {
-                this.renderObject(obj, obj.geometry, obj.material, camera);
+        if (this.renderState.hasDeferredMesh) {
+            const current = this.currentRenderTarget;
+            this.setRenderTarget(this.renderState.getDerferredRenderTarget());
+            this.gl.clearColor(0, 0, 0, 1);
+            this.clear();
+
+            for (const [mesh, defferedMeshDef] of this.renderState.deferred.deferredMeshes) {
+                this.renderObject(mesh, defferedMeshDef.geometry, defferedMeshDef.material, camera);
             }
+
+            this.setRenderTarget(current);
+
+            this.gl.clearColor(0, 0, 0, 1);
+            this.clear();
+
+            const forwardMeshDefs = this.renderState.deferred.batchedForwardMeshes;
+
+            forwardPassMeshes.push(...forwardMeshDefs.map((def) => new Mesh(def.geometry, def.material)));
+        } else {
+            for (const obj of scene.children) {
+                if (obj instanceof Mesh) {
+                    forwardPassMeshes.push(obj);
+                }
+            }
+        }
+
+        for (const mesh of forwardPassMeshes) {
+            const material = scene.overrideMaterial ?? mesh.material;
+            this.renderObject(mesh, mesh.geometry, material, camera);
         }
 
         this.clearBits = this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT;
@@ -106,7 +135,19 @@ export class WebGLRenderer {
             }
         }
 
-        const program = this.programManager.getProgram(material.name, defines);
+        if (camera instanceof PerspectiveCamera) {
+            defines["PERSPECTIVE_CAMERA"] = 1;
+        } else if (camera instanceof OrthoCamera) {
+            defines["ORTHOGRAPHIC_CAMERA"] = 1;
+        } else {
+            throw new Error("Not supported camera type: " + camera.constructor.name);
+        }
+
+        if (material instanceof ShaderMaterial) {
+            Object.assign(defines, material.defines);
+        }
+
+        const program = this.programManager.getProgram(material, defines);
         if (!program) {
             throw new Error("No properly program found for material: " + material.name);
         }
@@ -131,14 +172,27 @@ export class WebGLRenderer {
             program.setUniform("dirLightShadowMatrix", this.renderState.lights.dirLightShadowMatrixs[0]);
         }
 
+        if (material.enableDeferredRendering || material instanceof ShaderMaterial) {
+            const gbuffer = this.renderState.getDeferredGBuffer();
+            material.uniforms["g_diffuse"] = gbuffer.diffuse;
+            material.uniforms["g_normal"] = gbuffer.normal;
+            // use g-buffer packed depth instead of depth texture
+            material.uniforms["g_depth"] = gbuffer.depth;
+        }
+
         for (const name in material.uniforms) {
-            const value = material.uniforms[name];
+            let value = material.uniforms[name];
             if (value instanceof Texture) {
                 program.setUniform(name, value, this.textures);
             } else {
+                if (typeof value == "object" && "value" in value) {
+                    value = value.value;
+                }
                 program.setUniform(name, value);
             }
         }
+
+        this.state.setMaterial(material);
 
         let bindingState: GL_BindingState;
         if (!(bindingState = this.bindingStates.getBindingState(program, geometry))) {

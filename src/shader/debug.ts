@@ -1,3 +1,6 @@
+import depthChunk from "./chunks/depth";
+import packingChunk from "./chunks/packing";
+
 export const vertex = /* glsl */ `#version 300 es
 	precision highp float;
 	#pragma vscode_glsllint_stage : vert //pragma to set STAGE to 'vert'
@@ -22,16 +25,12 @@ export const fragment = /* glsl */ `#version 300 es
 	
 	out vec4 fragColor;
 
+	${depthChunk}
 
-	float ToLinearDepth(float depth) {
-		float ndc = depth * 2.0 - 1.0; 
-		// https://stackoverflow.com/questions/56428880/how-to-extract-camera-parameters-from-projection-matrix
-		float near = projMatrix[3][2]/(projMatrix[2][2] - 1.0);
-		float far = projMatrix[2][3]/(projMatrix[2][2] + 1.0);
-		float linearDepth = (2.0 * near * far) / (far + near - ndc * (far - near));	
-		return linearDepth;
-	}
 
+#ifdef IS_PACKED_DEPTH_MAP
+    ${packingChunk}
+#endif
 	void main() {
 		// vec2 uv = (gl_FragCoord.xy - viewport.xy)/viewport.zw;
 
@@ -45,8 +44,11 @@ export const fragment = /* glsl */ `#version 300 es
 		uv = uv + 0.5;
 
 #ifdef IS_DEPTH_MAP
+		float depth = unpackRGBAToDepth(texture(map, uv));
+		fragColor = vec4(vec3(1.0 - depth), 1.0);
+#elif defined(IS_PACKED_DEPTH_MAP)
 		float depth = texture(map, uv).r;
-		depth = ToLinearDepth(depth);
+		depth = toLinearDepth(depth);
 		fragColor = vec4(vec3(1.0 - depth), 1.0);
 #else
 		fragColor = texture(map, uv);
