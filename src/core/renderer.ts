@@ -1,6 +1,6 @@
 import { Vec3, Mat4, Quat, Vec4, Mat3 } from "gl-matrix";
 import { GL_Program } from "../gl/glProgram";
-import { Camera, Geometry, Material, Mesh, Object3D, OrthoCamera, PerspectiveCamera, Scene } from "./core";
+import { Camera, Geometry, Group, Material, Mesh, Object3D, OrthoCamera, PerspectiveCamera, Scene } from "./core";
 import { GL_BindingState, GL_BindingStates } from "../gl/glBindingStates";
 import { WebGLRenderTarget } from "./renderTarget";
 import { GL_State } from "../gl/glState";
@@ -56,16 +56,17 @@ export class WebGLRenderer {
 
         camera.updateMatrixWorld();
 
-        for (const obj of scene.children) {
-            if (obj instanceof Light) {
-                obj.updateMatrixWorld();
-                this.renderState.addLight(obj);
-            } else if (obj instanceof Mesh) {
-                if (obj.material.enableDeferredRendering) {
-                    this.renderState.addDeferredMesh(obj);
+        traverseScene(scene, {
+            caseLight: (light) => {
+                light.updateMatrixWorld();
+                this.renderState.addLight(light);
+            },
+            caseMesh: (mesh) => {
+                if (mesh.material.enableDeferredRendering) {
+                    this.renderState.addDeferredMesh(mesh);
                 }
-            }
-        }
+            },
+        });
 
         if (this.enableShadowPass) {
             const shadowLights = this.renderState.getLights().filter((light) => light.castShadow);
@@ -96,11 +97,11 @@ export class WebGLRenderer {
 
             forwardPassMeshes.push(...forwardMeshDefs.map((def) => new Mesh(def.geometry, def.material)));
         } else {
-            for (const obj of scene.children) {
-                if (obj instanceof Mesh) {
-                    forwardPassMeshes.push(obj);
-                }
-            }
+            traverseScene(scene, {
+                caseMesh: (mesh) => {
+                    forwardPassMeshes.push(mesh);
+                },
+            });
         }
 
         for (const mesh of forwardPassMeshes) {
@@ -245,5 +246,23 @@ export class WebGLRenderer {
 
     clear() {
         if (this.clearBits > 0) this.gl.clear(this.clearBits);
+    }
+}
+
+function traverseScene(
+    scene: { children: Object3D[] },
+    callbacks: {
+        caseLight?(light: Light): any;
+        caseMesh?(mesh: Mesh): any;
+    }
+) {
+    for (const item of scene.children) {
+        if (item instanceof Light) {
+            callbacks.caseLight?.(item);
+        } else if (item instanceof Mesh) {
+            callbacks.caseMesh?.(item);
+        } else if (item instanceof Group) {
+            traverseScene(item, callbacks);
+        }
     }
 }

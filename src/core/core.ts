@@ -73,6 +73,7 @@ class Geometry<T extends BufferLayout = BufferLayout> {
 }
 
 class Object3D {
+    name: string;
     parent: Object3D;
     matrix: Mat4;
     matrixWorld: Mat4;
@@ -91,6 +92,7 @@ class Object3D {
     castShadow = false;
     receiveShadow = false;
     constructor() {
+        this.name = "";
         this.matrix = Mat4.create();
         this.matrixWorld = Mat4.create();
         this.matrixWorldInv = Mat4.create();
@@ -128,7 +130,28 @@ class Object3D {
         // inv
         Mat4.invert(this.matrixWorldInv, this.matrixWorld);
     }
+
+    add(object: Object3D) {
+        object.parent = this;
+        this.children.push(object);
+    }
+
+    alignToBBox(bbox: [Vec3, Vec3], align: "center" | "bottom" | "top" = "center") {
+        const center = new Vec3(bbox[0].x + (bbox[1].x - bbox[0].x) / 2, 0, bbox[0].z + (bbox[1].z - bbox[0].z) / 2);
+        if (align === "center") {
+            center.y = bbox[0].y + (bbox[1].y - bbox[0].y) / 2;
+        } else if (align === "bottom") {
+            center.y = bbox[0].y;
+        } else if (align === "top") {
+            center.y = bbox[1].y;
+        }
+
+        this.position = this.position.sub(center);
+        this.updateMatrixWorld();
+    }
 }
+
+class Group extends Object3D {}
 
 class Mesh extends Object3D {
     centerAligned = true;
@@ -137,23 +160,7 @@ class Mesh extends Object3D {
     }
 
     alignToBBox(bbox?: [Vec3, Vec3], align: "center" | "bottom" | "top" = "center") {
-        bbox = bbox || this.geometry.bbox;
-        if (bbox != null) {
-            const center = new Vec3(
-                bbox[0].x + (bbox[1].x - bbox[0].x) / 2,
-                0,
-                bbox[0].z + (bbox[1].z - bbox[0].z) / 2
-            );
-            if (align === "center") {
-                center.y = bbox[0].y + (bbox[1].y - bbox[0].y) / 2;
-            } else if (align === "bottom") {
-                center.y = bbox[0].y;
-            } else if (align === "top") {
-                center.y = bbox[1].y;
-            }
-
-            this.position = this.position.sub(center);
-        }
+        super.alignToBBox(bbox || this.geometry.bbox, align);
     }
 }
 
@@ -239,4 +246,4 @@ class OrthoCamera extends Camera {
         Mat4.orthoNO(this.projectionMatrix, left, right, bottom, top, this.near, this.far);
     }
 }
-export { Material, Geometry, Object3D, Mesh, Scene, Camera, PerspectiveCamera, OrthoCamera };
+export { Material, Geometry, Object3D, Group, Mesh, Scene, Camera, PerspectiveCamera, OrthoCamera };

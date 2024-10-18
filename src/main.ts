@@ -25,9 +25,8 @@ const gl = renderer.gl;
 const objLoader = new OBJLoader();
 // const cube = objLoader.load("/3d-models/cube.obj");
 // const bunny = objLoader.load("/3d-models/stanford-bunny.obj");
-const rockerArm = objLoader.load("/3d-models/rocker-arm.obj");
-
-const geometryPassGeometry = rockerArm;
+// const rockerArm = objLoader.load("/3d-models/rocker-arm.obj");
+const rockerArm = objLoader.load("/3d-models/LittlestTokyo.obj");
 const screenPlane = new ScreenPlane();
 const groundPlane = new Plane();
 
@@ -70,11 +69,8 @@ const scale = 2;
 groundPlaneMesh.scale.set(Array(3).fill(scale));
 
 // model
-const pbrMaterial4Model = new PBRMaterial();
-const modelMesh = new Mesh(geometryPassGeometry, pbrMaterial4Model);
-modelMesh.receiveShadow = true;
-pbrMaterial4Model.uniforms.metalness = 0.0;
-pbrMaterial4Model.uniforms.roughness = 1.0;
+const mainModel = rockerArm;
+mainModel.receiveShadow = true;
 
 const dirLight = new DirectionalLight();
 dirLight.castShadow = true;
@@ -112,7 +108,7 @@ debugMaterial4.uniforms.adaptiveAspectRatio = adaptiveAspectRatio;
 /*                                   Scenes                                   */
 /* -------------------------------------------------------------------------- */
 
-const renderScene = new Scene([groundPlaneMesh, modelMesh, dirLight]);
+const renderScene = new Scene([groundPlaneMesh, mainModel, dirLight]);
 
 const viewportScene1 = new Scene([debug1]);
 const viewportScene2 = new Scene([debug2]);
@@ -123,9 +119,9 @@ const viewportScene4 = new Scene([debug4]);
 /*                               event handlers                               */
 /* -------------------------------------------------------------------------- */
 objLoader.onLoad((obj) => {
-    // const scale = 5;
-    // geometryPassMesh.scale.set([scale, scale, scale]);
-    modelMesh.alignToBBox(obj.bbox, "bottom");
+    const scale = 0.001;
+    obj.scale.set([scale, scale, scale]);
+    obj.updateMatrixWorld();
 });
 
 /* -------------------------------------------------------------------------- */

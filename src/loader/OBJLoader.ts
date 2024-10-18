@@ -1,53 +1,90 @@
 import { Vec3, Vec3Like } from "gl-matrix";
-import { Geometry } from "../core/core";
+import { Geometry, Group, Mesh } from "../core/core";
 import { StructuredData, TypedArrayCode } from "../util";
 import { Loader } from "./Loader";
+import { PBRMaterial } from "../materials";
 
 const separator = /\s{1,2}/g;
-
-export class OBJLoader extends Loader<Geometry> {
+const bufferLayout = StructuredData.createLayout({
+    position: {
+        type: TypedArrayCode.float32,
+        components: 3,
+    },
+    uv: {
+        type: TypedArrayCode.float32,
+        components: 2,
+    },
+    normal: {
+        type: TypedArrayCode.float32,
+        components: 3,
+    },
+});
+export class OBJLoader extends Loader<Group> {
     public load(url: string) {
-        const bufferLayout = StructuredData.createLayout({
-            position: {
-                type: TypedArrayCode.float32,
-                components: 3,
-            },
-            uv: {
-                type: TypedArrayCode.float32,
-                components: 2,
-            },
-            normal: {
-                type: TypedArrayCode.float32,
-                components: 3,
-            },
-        });
-
-        const geometry = new Geometry(bufferLayout);
-
-        geometry.setAttribute("position", []);
-        geometry.setAttribute("normal", []);
-        geometry.setAttribute("uv", []);
-
+        const container = new Group();
         fetch(url).then(async (resp) => {
             const content = await resp.text();
-            const {
-                geometry: { position, normal, uv },
-                bbox,
-            } = this.parseObjGeometry(content);
+            const contentLines = content.split(/\n/g);
 
-            geometry.setAttribute("position", position);
-            geometry.setAttribute("normal", normal);
-            geometry.setAttribute("uv", uv);
-            geometry.bbox = bbox;
-            geometry.isDirty = true;
+            const objects: { name: string; geometry: Geometry }[] = [];
 
-            this.emit("loader:load", geometry);
+            const bboxMin = new Vec3([Infinity, Infinity, Infinity]);
+            const bboxMax = new Vec3([-Infinity, -Infinity, -Infinity]);
+
+            let parser: ReturnType<typeof this.createObjGeometryParser>;
+            let lineNum = 0;
+            let offsets = { position: 0, normal: 0, uv: 0 };
+            for (let line of contentLines) {
+                lineNum += 1;
+                line = line.trim();
+                const parts = line.split(separator);
+                if (parts[0] === "o") {
+                    if (parser !== undefined) {
+                        const result = parser.getResult();
+                        objects.push(result);
+                        offsets.position += result.source.v.length / 3;
+                        offsets.normal += result.source.vn.length / 3;
+                        offsets.uv += result.source.vt.length / 2;
+                    }
+
+                    parser = this.createObjGeometryParser(parts[1], offsets);
+                    continue;
+                }
+
+                if (!parser) {
+                    parser = this.createObjGeometryParser("", offsets);
+                }
+                parser.readLine(line);
+            }
+            objects.push(parser.getResult());
+
+            for (const obj of objects) {
+                const pbrMaterial = new PBRMaterial();
+                pbrMaterial.uniforms.metalness = 0.0;
+                pbrMaterial.uniforms.roughness = 1.0;
+                const mesh = new Mesh(obj.geometry, pbrMaterial);
+                mesh.name = obj.name;
+
+                bboxMin.x = Math.min(bboxMin.x, obj.geometry.bbox[0].x);
+                bboxMin.y = Math.min(bboxMin.y, obj.geometry.bbox[0].y);
+                bboxMin.z = Math.min(bboxMin.z, obj.geometry.bbox[0].z);
+
+                bboxMax.x = Math.max(bboxMax.x, obj.geometry.bbox[1].x);
+                bboxMax.y = Math.max(bboxMax.y, obj.geometry.bbox[1].y);
+                bboxMax.z = Math.max(bboxMax.z, obj.geometry.bbox[1].z);
+
+                container.add(mesh);
+            }
+
+            container.alignToBBox([bboxMin, bboxMax], "bottom");
+
+            this.emit("loader:load", container);
         });
 
-        return geometry;
+        return container;
     }
 
-    private parseObjGeometry(content) {
+    private createObjGeometryParser(objectName: string, offsets: { position: number; normal: number; uv: number }) {
         const source = {
             v: [],
             vn: [],
@@ -64,10 +101,7 @@ export class OBJLoader extends Loader<Geometry> {
         const bboxMin = [Infinity, Infinity, Infinity];
         const bboxMax = [-Infinity, -Infinity, -Infinity];
 
-        const lines = content.split(/\n/g);
-
-        for (let line of lines) {
-            line = line.trim();
+        function readLine(line) {
             const parts = line.trim().split(separator);
 
             const firstChar = parts[0]?.[0];
@@ -99,9 +133,9 @@ export class OBJLoader extends Loader<Geometry> {
                     const v2 = parts[i].split(/\//g).map((d) => parseFloat(d));
                     const v3 = parts[i + 1].split(/\//g).map((d) => parseFloat(d));
 
-                    const i1 = v1[0] - 1;
-                    const i2 = v2[0] - 1;
-                    const i3 = v3[0] - 1;
+                    const i1 = v1[0] - 1 - offsets.position;
+                    const i2 = v2[0] - 1 - offsets.position;
+                    const i3 = v3[0] - 1 - offsets.position;
 
                     const posA = source.v.slice(i1 * 3, i1 * 3 + 3);
                     const posB = source.v.slice(i2 * 3, i2 * 3 + 3);
@@ -112,9 +146,9 @@ export class OBJLoader extends Loader<Geometry> {
                     geometry.position.push(...posC);
 
                     if (v1[1] && v2[1] && v3[1]) {
-                        const t1 = v1[1] - 1;
-                        const t2 = v2[1] - 1;
-                        const t3 = v3[1] - 1;
+                        const t1 = v1[1] - 1 - offsets.uv;
+                        const t2 = v2[1] - 1 - offsets.uv;
+                        const t3 = v3[1] - 1 - offsets.uv;
 
                         geometry.uv.push(...source.vt.slice(t1 * 2, t1 * 2 + 2));
                         geometry.uv.push(...source.vt.slice(t2 * 2, t2 * 2 + 2));
@@ -126,9 +160,9 @@ export class OBJLoader extends Loader<Geometry> {
                     }
 
                     if (v1[2] && v2[2] && v3[2]) {
-                        const n1 = v1[2] - 1;
-                        const n2 = v2[2] - 1;
-                        const n3 = v3[2] - 1;
+                        const n1 = v1[2] - 1 - offsets.normal;
+                        const n2 = v2[2] - 1 - offsets.normal;
+                        const n3 = v3[2] - 1 - offsets.normal;
                         geometry.normal.push(...source.vn.slice(n1 * 3, n1 * 3 + 3));
                         geometry.normal.push(...source.vn.slice(n2 * 3, n2 * 3 + 3));
                         geometry.normal.push(...source.vn.slice(n3 * 3, n3 * 3 + 3));
@@ -148,6 +182,25 @@ export class OBJLoader extends Loader<Geometry> {
             }
         }
 
-        return { geometry, bbox: [new Vec3(...bboxMin), new Vec3(...bboxMax)] as [Vec3, Vec3] };
+        function getResult() {
+            const bufferGeometry = new Geometry(bufferLayout);
+
+            bufferGeometry.setAttribute("position", geometry.position);
+            bufferGeometry.setAttribute("normal", geometry.normal);
+            bufferGeometry.setAttribute("uv", geometry.uv);
+            bufferGeometry.bbox = [new Vec3(...bboxMin), new Vec3(...bboxMax)] as [Vec3, Vec3];
+            bufferGeometry.isDirty = true;
+
+            return {
+                geometry: bufferGeometry,
+                name: objectName,
+                source,
+            };
+        }
+
+        return {
+            readLine,
+            getResult,
+        };
     }
 }
