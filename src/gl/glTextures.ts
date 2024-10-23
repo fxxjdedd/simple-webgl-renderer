@@ -53,7 +53,9 @@ export class GL_Textures {
                         if (type === gl.HALF_FLOAT) {
                             internalFormat = gl.RGBA16F;
                         } else if (type === gl.FLOAT) {
-                            internalFormat = gl.RGBA32F;
+                            // FIXME: gl.RGBA32F not supported in my m1 macmini
+                            // internalFormat = gl.RGBA32F;
+                            internalFormat = gl.RGBA16F;
                         }
                     }
                     gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, texture.image.data);
