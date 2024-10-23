@@ -6,6 +6,7 @@ import { Camera, Mesh, Scene } from "../core/core";
 import { ShaderMaterial } from "../materials/ShaderMaterial";
 import * as ssaoShader from "../shader/post-effects/ssao";
 import * as copyShader from "../shader/copy";
+import * as kuwaharaFilter from "../shader/filters/kuwahara";
 import { ScreenPlane } from "../geometry/ScreenPlane";
 import { DataTexture } from "../textures/DataTexture";
 import {
@@ -67,9 +68,10 @@ export class SSAOPass {
         );
 
         this.blurMaterial = new ShaderMaterial({
-            vertexShader: "",
-            fragmentShader: "",
+            vertexShader: kuwaharaFilter.vertex,
+            fragmentShader: kuwaharaFilter.fragment,
         });
+        this.blurMaterial.uniforms["size"] = { value: 2 };
 
         this.copyMaterial = new ShaderMaterial({
             vertexShader: copyShader.vertex,
@@ -86,10 +88,16 @@ export class SSAOPass {
         };
     }
     render(renderer: WebGLRenderer, writeBuffer: WebGLRenderTarget, readBuffer: WebGLRenderTarget) {
-        // render ssao and blur texture
+        // render ssao and blur texture to ssao target
         this.screenMesh.material = this.ssaoMaterial;
         this.screenMesh.material.blending.enabled = false;
         renderer.setRenderTarget(this.ssaoRenderTarget);
+        renderer.render(this.screen, this.camera);
+
+        this.screenMesh.material = this.blurMaterial;
+        this.screenMesh.material.map = this.ssaoRenderTarget.texture;
+        this.screenMesh.material.blending.enabled = false;
+        renderer.setRenderTarget(this.blurRenderTarget);
         renderer.render(this.screen, this.camera);
 
         // copy current screen pixels to final target
@@ -100,7 +108,7 @@ export class SSAOPass {
         renderer.render(this.screen, this.camera);
 
         // blend ssao and blur texture on final target
-        this.screenMesh.material.map = this.ssaoRenderTarget.texture;
+        this.screenMesh.material.map = this.blurRenderTarget.texture;
         this.screenMesh.material.blending.enabled = true;
         renderer.setRenderTarget(writeBuffer);
         renderer.render(this.screen, this.camera);
