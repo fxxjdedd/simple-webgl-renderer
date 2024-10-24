@@ -181,6 +181,7 @@ export class WebGLRenderer {
             material.uniforms["g_depth"] = gbuffer.depth;
         }
 
+        // FIXME: below lines cause perf issue when adding texture to .obj material
         for (const name in material.uniforms) {
             let value = material.uniforms[name];
             if (value instanceof Texture) {
