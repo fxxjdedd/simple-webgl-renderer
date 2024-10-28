@@ -19,6 +19,10 @@ export class Texture {
     isDirty = true;
     isDepthTexture: boolean = false; // temporary
     isRenderTargetTexture: boolean = false;
+
+    // debug
+    url?: string;
+
     constructor(public image?: TextureImage, public param?: TextureParam) {
         this.image ??= null;
         this.param = {

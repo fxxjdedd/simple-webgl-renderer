@@ -4,6 +4,7 @@ import { StructuredData, TypedArrayCode } from "../util";
 import { Loader } from "./Loader";
 import { PBRMaterial } from "../materials";
 import { TextureLoader } from "./TextureLoader";
+import { Texture } from "../core/texture";
 
 const separator = /\s{1,2}/g;
 const bufferLayout = StructuredData.createLayout({
@@ -241,6 +242,8 @@ export class OBJLoader extends Loader<Group> {
 class OBJMtlLoader extends Loader<{
     [key: string]: PBRMaterial;
 }> {
+    textureCache = {} as Record<string, Texture>;
+
     async load(baseUrl, materialName) {
         const resp = await fetch(joinUrlPath(baseUrl, materialName));
         const content = await resp.text();
@@ -301,6 +304,7 @@ class OBJMtlLoader extends Loader<{
             materialName,
         };
 
+        const loader = this;
         function readLine(line: string) {
             const splits = line.split(" ");
             const key = splits[0].toLowerCase();
@@ -326,7 +330,10 @@ class OBJMtlLoader extends Loader<{
                     } else {
                         texUrl = joinUrlPath(baseUrl, value[0]);
                     }
-                    materialParams.diffuseMap = new TextureLoader().load(texUrl);
+                    if (!loader.textureCache[texUrl]) {
+                        loader.textureCache[texUrl] = new TextureLoader().load(texUrl);
+                    }
+                    materialParams.diffuseMap = loader.textureCache[texUrl];
                     break;
                 case "map_ks":
                 case "map_ke":

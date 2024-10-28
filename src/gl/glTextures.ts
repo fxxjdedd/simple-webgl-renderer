@@ -7,6 +7,7 @@ export class GL_Textures {
     unit = 0;
     textures = new Map();
     textureToUnits = new Map();
+    unitToTexLocations = new Map();
     constructor(
         private gl: WebGL2RenderingContext,
         private constantsMapping: GL_ConstantsMapping,
@@ -83,10 +84,19 @@ export class GL_Textures {
         this.initTexture(texture);
 
         const texLocation = this.getTextureLocation(texture);
+
+        // deal with same material objs render frequently
+        const currentBindedTex = this.unitToTexLocations.get(unit);
+        if (currentBindedTex === texLocation) {
+            return;
+        }
+
         this.state.bindTexture(unit, texLocation);
 
+        this.unitToTexLocations.set(unit, texLocation);
+
         if (!texture.isRenderTargetTexture && texture.image instanceof Image) {
-            // temprorary code
+            // REFACTOR: temprorary code
             const internalFormat = texture.isDepthTexture ? gl.DEPTH_COMPONENT16 : format;
             gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, format, type, texture.image);
         }

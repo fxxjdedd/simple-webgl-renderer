@@ -16,6 +16,10 @@ export class GL_Deferred {
 
     get gBuffer() {
         const rtt = this.gBufferRenderTarget;
+        // debug
+        rtt.textures[0].url = "diffuse";
+        rtt.textures[1].url = "normal";
+        rtt.textures[2].url = "depth";
         return {
             diffuse: rtt.textures[0],
             normal: rtt.textures[1],
