@@ -150,22 +150,22 @@ function animate() {
     debugMaterial4.map = ssaoPass.ssaoRenderTarget.texture;
     /* -------------------------- post-effects ends -------------------------- */
 
-    // const blockSize = canvas.height / 5;
-    // renderer.setViewport(0, 0, blockSize, blockSize);
-    // renderer.setClearbits(0);
-    // renderer.render(viewportScene1, camera);
+    const blockSize = canvas.height / 5;
+    renderer.setViewport(0, 0, blockSize, blockSize);
+    renderer.setClearbits(0);
+    renderer.render(viewportScene1, camera);
 
-    // renderer.setViewport(blockSize, 0, blockSize, blockSize);
-    // renderer.setClearbits(0);
-    // renderer.render(viewportScene2, camera);
+    renderer.setViewport(blockSize, 0, blockSize, blockSize);
+    renderer.setClearbits(0);
+    renderer.render(viewportScene2, camera);
 
-    // renderer.setViewport(blockSize, blockSize, blockSize, blockSize);
-    // renderer.setClearbits(0);
-    // renderer.render(viewportScene3, camera);
+    renderer.setViewport(blockSize, blockSize, blockSize, blockSize);
+    renderer.setClearbits(0);
+    renderer.render(viewportScene3, camera);
 
-    // renderer.setViewport(0, blockSize, blockSize, blockSize);
-    // renderer.setClearbits(0);
-    // renderer.render(viewportScene4, camera);
+    renderer.setViewport(0, blockSize, blockSize, blockSize);
+    renderer.setClearbits(0);
+    renderer.render(viewportScene4, camera);
 
     requestAnimationFrame(() => {
         animate();
