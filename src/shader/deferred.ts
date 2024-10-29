@@ -70,7 +70,7 @@ export const fragment = /* glsl */ `#version 300 es
 #endif
 
 #ifdef USE_MAP
-		g_diffuse = texture(map, v_uv) * diffuse;
+		g_diffuse = texture(map, vec2(v_uv.x, 1.0 - v_uv.y));
 #else
 		g_diffuse = diffuse;
 #endif

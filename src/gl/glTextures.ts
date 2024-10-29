@@ -88,7 +88,6 @@ export class GL_Textures {
 
         const texLocation = this.getTextureLocation(texture);
 
-        // deal with same material objs render frequently
         const currentBoundTex = this.unitToTexLocations.get(unit);
         if (currentBoundTex === texLocation) {
             return;
