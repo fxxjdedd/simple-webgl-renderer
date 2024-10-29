@@ -26,7 +26,9 @@ const objLoader = new OBJLoader();
 // const cube = objLoader.load("/3d-models/cube.obj");
 // const bunny = objLoader.load("/3d-models/stanford-bunny.obj");
 // const rockerArm = objLoader.load("/3d-models/rocker-arm.obj");
-const rockerArm = objLoader.load("/3d-models/LittlestTokyo.obj");
+const rockerArm = objLoader.load("/3d-models/LittlestTokyo/LittlestTokyo.obj");
+// const rockerArm = objLoader.load("/3d-models/Duck/rubber_duck_toy_1k.obj");
+// const rockerArm = objLoader.load("/3d-models/PictureFrame/fancy_picture_frame_01_1k.obj");
 const screenPlane = new ScreenPlane();
 const groundPlane = new Plane();
 

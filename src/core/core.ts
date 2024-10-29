@@ -20,7 +20,11 @@ class Material {
     private _normalMap: Texture;
     set map(v: Texture) {
         this._map = v;
-        this.uniforms["map"] = v;
+        if (v) {
+            this.uniforms["map"] = v;
+        } else {
+            delete this.uniforms["map"];
+        }
     }
 
     get map() {

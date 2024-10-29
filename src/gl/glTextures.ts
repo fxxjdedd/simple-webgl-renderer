@@ -1,5 +1,6 @@
 import { Texture } from "../core/texture";
 import { DataTexture } from "../textures/DataTexture";
+import { DepthTexture } from "../textures/DepthTexture";
 import { GL_ConstantsMapping } from "./glConstantsMapping";
 import { GL_State } from "./glState";
 
@@ -7,6 +8,7 @@ export class GL_Textures {
     unit = 0;
     textures = new Map();
     textureToUnits = new Map();
+    unitToTexLocations = new Map();
     constructor(
         private gl: WebGL2RenderingContext,
         private constantsMapping: GL_ConstantsMapping,
@@ -46,6 +48,7 @@ export class GL_Textures {
             if (texture.image != null) {
                 const { width, height } = texture.image;
                 const { wrapS, wrapT, magFilter, minFilter, format, type } = this.getGLTextureParams(texture.param);
+
                 if (texture instanceof DataTexture) {
                     // TODO: precisure internalFormat, see three.js WebGLTexture getInternalFormat function
                     let internalFormat = format;
@@ -59,10 +62,14 @@ export class GL_Textures {
                         }
                     }
                     gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, texture.image.data);
-                } else {
+                } else if (texture.isDepthTexture) {
                     // TODO: precisure internalFormat
-                    const internalFormat = texture.isDepthTexture ? gl.DEPTH_COMPONENT16 : format;
-                    gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, null);
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT16, width, height, 0, format, type, null);
+                } else if (texture.isRenderTargetTexture) {
+                    // must be called for rendertarget texture
+                    gl.texImage2D(gl.TEXTURE_2D, 0, format, width, height, 0, format, type, null);
+                } else if (texture.image instanceof Image) {
+                    gl.texImage2D(gl.TEXTURE_2D, 0, format, format, type, texture.image);
                 }
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrapS);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrapT);
@@ -77,19 +84,18 @@ export class GL_Textures {
     }
 
     uploadTexture(texture: Texture, unit: number) {
-        const gl = this.gl;
-        const { format, type } = this.getGLTextureParams(texture.param);
-
         this.initTexture(texture);
 
         const texLocation = this.getTextureLocation(texture);
+
+        const currentBoundTex = this.unitToTexLocations.get(unit);
+        if (currentBoundTex === texLocation) {
+            return;
+        }
+
         this.state.bindTexture(unit, texLocation);
 
-        if (!texture.isRenderTargetTexture && texture.image instanceof Image) {
-            // temprorary code
-            const internalFormat = texture.isDepthTexture ? gl.DEPTH_COMPONENT16 : format;
-            gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, format, type, texture.image);
-        }
+        this.unitToTexLocations.set(unit, texLocation);
     }
 
     private getGLTextureParams<T extends object>(params: T) {
