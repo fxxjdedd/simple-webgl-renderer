@@ -14,6 +14,7 @@ import { getAdaptiveAspectRatio } from "./util/texture";
 import { Plane } from "./geometry/Plane";
 import { SSAOPass } from "./post-effects/SSAOPass";
 import { RenderPass } from "./post-effects/RenderPass";
+import { GTAOPass } from "./post-effects/GTAOPass";
 const canvas = document.getElementById("webglcanvas") as HTMLCanvasElement;
 const renderer = new WebGLRenderer(canvas);
 const gl = renderer.gl;
@@ -132,7 +133,8 @@ objLoader.onLoad((obj) => {
 const writeBuffer = new WebGLRenderTarget(renderer.viewport.z, renderer.viewport.w);
 const readBuffer = new WebGLRenderTarget(renderer.viewport.z, renderer.viewport.w);
 
-const ssaoPass = new SSAOPass(camera, renderer.viewport.z, renderer.viewport.w, 32);
+// const ssaoPass = new SSAOPass(camera, renderer.viewport.z, renderer.viewport.w, 32);
+const gtaoPass = new GTAOPass(camera, renderer.viewport.z, renderer.viewport.w, 32);
 const renderPass = new RenderPass(camera);
 
 /* -------------------------------------------------------------------------- */
@@ -146,10 +148,11 @@ function animate() {
 
     /* ------------------------- post-effects starts ------------------------- */
     // TODO: support buffer swap, now temproray exchange buffer
-    ssaoPass.render(renderer, readBuffer, writeBuffer);
+    gtaoPass.render(renderer, readBuffer, writeBuffer);
     renderPass.render(renderer, null, readBuffer);
 
-    debugMaterial4.map = ssaoPass.ssaoRenderTarget.texture;
+    debugMaterial4.map = gtaoPass.gtaoRenderTarget.texture;
+    // debugMaterial4.map = ssaoPass.ssaoRenderTarget.texture;
     /* -------------------------- post-effects ends -------------------------- */
 
     const blockSize = canvas.height / 5;
