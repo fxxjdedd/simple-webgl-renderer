@@ -1,6 +1,6 @@
 import depthChunk from "../chunks/depth";
 import packingChunk from "../chunks/packing";
-
+import ssChunk from "../chunks/ss";
 export function getDefines() {
     return {
         KERNEL_SIZE: 32,
@@ -48,15 +48,14 @@ export const fragment = /* glsl */ `#version 300 es
 
     ${depthChunk}
     ${packingChunk}
+    ${ssChunk}
 
 	void main() {
 		highp vec2 uv = (gl_FragCoord.xy - viewport.xy)/viewport.zw;
 		float depth = unpackRGBAToDepth(texture(g_depth, uv));
         vec3 normalView = texture(g_normal, uv).xyz * 2.0 - 1.0;
 
-		vec3 ndc = vec3(uv, depth) * 2.0 - 1.0;
-		vec4 posHomo = (inverse(projMatrix) * vec4(ndc, 1.0));
-		vec3 posView = (posHomo/posHomo.w).xyz; // calculate in main-camera view-space
+        vec3 posView = uvDepthToViewPos(uv, depth);
 
         vec3 random = texture(noiseMap, uv).xyz; 
 
@@ -69,14 +68,12 @@ export const fragment = /* glsl */ `#version 300 es
         for (int i = 0; i < KERNEL_SIZE_TEMP; i++) {
             vec3 samplerDir = tbnMatrix * kernels[i];
             vec3 samplerPos = posView + (samplerDir * kernelRadius);
-            vec4 samplerPosInClip = projMatrix * vec4(samplerPos, 1.0);
-            vec3 samplerPosInNDC = samplerPosInClip.xyz/samplerPosInClip.w;
+            vec3 samplerPosInUVDepth = viewPosToUvDepth(samplerPos);
 
-            vec3 samplerPosInUV = samplerPosInNDC.xyz * 0.5 + 0.5;
-            float samplerDepth = samplerPosInUV.z;
+            float samplerDepth = samplerPosInUVDepth.z;
             float samplerLinearDepth = toLinearDepth(samplerDepth);
 
-		    float sampledFragDepth = unpackRGBAToDepth(texture(g_depth, samplerPosInUV.xy));
+		    float sampledFragDepth = unpackRGBAToDepth(texture(g_depth, samplerPosInUVDepth.xy));
             // TODO: support ortho proj
             float sampledFragDepthLinear = toLinearDepth(sampledFragDepth);
             
