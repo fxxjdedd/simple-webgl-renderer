@@ -25,16 +25,22 @@ export class GL_Program {
         gl.compileShader(vs);
 
         if (!gl.getShaderParameter(vs, gl.COMPILE_STATUS)) {
-            throw new Error(gl.getShaderInfoLog(vs));
+            const errorMessage = gl.getShaderInfoLog(vs);
+            console.error("Vertex shader compilation error:");
+            this.logShaderError(errorMessage, this.vertexShader);
+            throw new Error(errorMessage);
         }
 
         const fs = gl.createShader(gl.FRAGMENT_SHADER);
-        this.fragmentShader = this.prefixVertShader(defines, shader.fragment);
+        this.fragmentShader = this.prefixFragShader(defines, shader.fragment);
         gl.shaderSource(fs, this.fragmentShader);
         gl.compileShader(fs);
 
         if (!gl.getShaderParameter(fs, gl.COMPILE_STATUS)) {
-            throw new Error(gl.getShaderInfoLog(fs));
+            const errorMessage = gl.getShaderInfoLog(fs);
+            console.error("Fragment shader compilation error:");
+            this.logShaderError(errorMessage, this.fragmentShader);
+            throw new Error(errorMessage);
         }
 
         gl.attachShader(program, vs);
@@ -42,10 +48,36 @@ export class GL_Program {
         gl.linkProgram(program);
 
         if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-            throw new Error(gl.getProgramInfoLog(program));
+            const errorMessage = gl.getProgramInfoLog(program);
+            console.error("Shader program linking error:");
+            console.error(errorMessage);
+            throw new Error(errorMessage);
         }
         this.uniforms = this.fetchUniformLocations();
         this.attributes = this.fetchAttributeLocations();
+    }
+
+    private logShaderError(errorMessage: string, shaderSource: string) {
+        const lines = shaderSource.split("\n");
+        const errorLines = errorMessage.match(/ERROR: \d+:(\d+):/g);
+
+        if (errorLines) {
+            errorLines.forEach((errorLine) => {
+                const lineNumber = parseInt(errorLine.match(/ERROR: \d+:(\d+):/)[1]);
+
+                // Print the error context (3 lines before and after)
+                const startLine = Math.max(0, lineNumber - 4);
+                const endLine = Math.min(lines.length - 1, lineNumber + 2);
+
+                console.error("\nError near line", lineNumber + ":");
+                for (let i = startLine; i <= endLine; i++) {
+                    const prefix = i === lineNumber - 1 ? "> " : "  ";
+                    console.error(`${prefix}${i + 1}: ${lines[i]}`);
+                }
+            });
+        }
+
+        console.error("\nFull error message:", errorMessage);
     }
 
     private fetchUniformLocations() {
