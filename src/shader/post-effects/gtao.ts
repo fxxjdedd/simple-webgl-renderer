@@ -51,7 +51,7 @@ export const fragment = /* glsl */ `#version 300 es
 	void main() {
 		highp vec2 uv = (gl_FragCoord.xy - viewport.xy)/viewport.zw;
 		float depth = unpackRGBAToDepth(texture(g_depth, uv));
-        vec3 normalView = texture(g_normal, uv).xyz * 2.0 - 1.0;
+        vec3 viewNormal = texture(g_normal, uv).xyz * 2.0 - 1.0;
 
         vec3 posView = uvDepthToViewPos(uv, depth);
 
@@ -61,13 +61,13 @@ export const fragment = /* glsl */ `#version 300 es
         vec3 cameraSpaceNormal = vec3(0., 0., 1.0);
         vec3 cameraSpaceTangent = normalize(random - cameraSpaceNormal * dot(random, cameraSpaceNormal));
         vec3 cameraSpaceBitangent = cross(cameraSpaceNormal, cameraSpaceTangent);
-        vec3 cameraTBN = mat3(cameraSpaceTangent, cameraSpaceBitangent, cameraSpaceNormal);
+        mat3 cameraTBN = mat3(cameraSpaceTangent, cameraSpaceBitangent, cameraSpaceNormal);
         // ref line 1
         vec3 Wo = normalize(-posView);
         float visibility = 0.0;
         for (int i = 0; i < directionCount; i ++) {
             // ref line 5
-            float phi = ((float)i / (float)directionCount) * PI; // NOTE: phi is defined in cameraSpace
+            float phi = (float(i) / float(directionCount)) * PI; // NOTE: phi is defined in cameraSpace
             // ref line 6,8
             vec3 D = vec3(sin(phi), cos(phi), 0.0); // in cameraSpace
             D = normalize(cameraTBN * D); // convert D from cameraSpace to viewSpace
@@ -85,13 +85,13 @@ export const fragment = /* glsl */ `#version 300 es
 
             // ref line 17
             for (int side = 0; side < 2; side ++) {
-                float sideCoef = (float)side * 2.0 - 1.0;
+                float sideCoef = float(side) * 2.0 - 1.0;
                 float cosHorizontal = -1.0;
                 // ref line 19
                 for (int step = 0; step < sampleStepCount; step ++) {
 
                     // ref line 20
-                    float stepScale = (float)step / (float)sampleStepCount;
+                    float stepScale = float(step + 1) / float(sampleStepCount);
                     // ref line 21
                     vec3 viewSpaceOffset = D * stepScale * sideCoef;
                     // ref line 22
@@ -108,47 +108,16 @@ export const fragment = /* glsl */ `#version 300 es
                         // ref line 24
                         cosHorizontal = max(cosHorizontal, dot(horizonDir, Wo));
                     }
-
                 }
 
                 // ref line 27: h[side] ← n+ CLAMP((−1+2 ∗ side) ∗ arccos(cHorizonCos)−n,−π/2,π/2)
                 float sideTheta = projNormalTheta + clamp(sideCoef * acos(cosHorizontal) - projNormalTheta, -PI/2.0, PI/2.0);
                 // ref line 28: visibility ← visibility+ LEN(projNormalV) ∗ (cosN+2 ∗ h[side] ∗ sin(n)−cos(2 ∗ h[side]−n))/4 
-                // visibility =  
-
+                visibility = visibility + length(projNormalInPlane) * (cosHorizontal + 2.0 * sideTheta * sin(projNormalTheta) - cos(2.0 * sideTheta - projNormalTheta)) / 4.0;
             }
-
-            
-
-
-
-
-
-
-
-
         }
-
-
-
-
         
-
-
-
-        vec3 t = normalize(random - normalView * dot(random, normalView));
-        vec3 b = cross(normalView, t);
-        mat3 tbnMatrix = mat3(t, b, normalView);
-
-
-        
-
-        float occlusion = 0.0;
-
-        occlusion = clamp((occlusion / float(KERNEL_SIZE_TEMP)), 0.0, 1.0);
-        fragColor = vec4(vec3(1.0 - occlusion), 1.0);
-        fragColor = vec4(vec3(1.0,1.0,0.0), 1.0);
-
+        fragColor = vec4(vec3(visibility), 1.0);
 	}
 
 `;
