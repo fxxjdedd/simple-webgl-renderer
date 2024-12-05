@@ -59,7 +59,7 @@ export class GTAOPass {
             RGBAFormat,
             FloatType
         );
-        this.gtaoMaterial.uniforms["directionCount"] = { value: 5 };
+        this.gtaoMaterial.uniforms["directionCount"] = { value: 10 };
         this.gtaoMaterial.uniforms["sampleStepCount"] = { value: 5 };
 
         this.blurMaterial = new ShaderMaterial({

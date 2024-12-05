@@ -97,17 +97,15 @@ export const fragment = /* glsl */ `#version 300 es
                     // ref line 22
                     vec3 marchingPosView = posView + viewSpaceOffset;
                     vec3 marchingPosUVDepth = viewPosToUvDepth(marchingPosView);
-                    float marchingDepthSS = toLinearDepth(texture(g_depth, marchingPosUVDepth.xy).r);
+                    float marchingDepthSS = unpackRGBAToDepth(texture(g_depth, marchingPosUVDepth.xy));
                     vec3 marchingPosViewSS = uvDepthToViewPos(marchingPosUVDepth.xy, marchingDepthSS);
 
                     // ref line 23
                     vec3 horizonDir = marchingPosViewSS - posView;
 
-                    if (abs(horizonDir.z) < 0.01) {
-                        horizonDir = normalize(horizonDir);
-                        // ref line 24
-                        cosHorizontal = max(cosHorizontal, dot(horizonDir, Wo));
-                    }
+                    horizonDir = normalize(horizonDir);
+                    // ref line 24
+                    cosHorizontal = max(cosHorizontal, dot(horizonDir, Wo));
                 }
 
                 // ref line 27: h[side] ← n+ CLAMP((−1+2 ∗ side) ∗ arccos(cHorizonCos)−n,−π/2,π/2)
@@ -116,6 +114,8 @@ export const fragment = /* glsl */ `#version 300 es
                 visibility = visibility + length(projNormalInPlane) * (cosHorizontal + 2.0 * sideTheta * sin(projNormalTheta) - cos(2.0 * sideTheta - projNormalTheta)) / 4.0;
             }
         }
+
+        visibility /= float(directionCount);
         
         fragColor = vec4(vec3(visibility), 1.0);
 	}
