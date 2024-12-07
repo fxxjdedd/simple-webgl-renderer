@@ -43,7 +43,7 @@ export class GL_Lights {
                     shadowMapSize: shadow.mapSize,
                 };
 
-                this.dirLightShadowMaps[dirLightIndex] = shadow.map.texture;
+                this.dirLightShadowMaps[dirLightIndex] = shadow.map?.texture;
 
                 this.dirLightShadowMatrixs[dirLightIndex] = shadow.vpMatrix;
 

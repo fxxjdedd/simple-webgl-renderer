@@ -30,9 +30,16 @@ export class GL_ShadowDepthPass {
         this.renderer.setRenderTarget(originRenderTarget);
     }
 
-    renderShadowMap(object: Object3D, camera: Camera, shadowCamera: Camera, light: Light) {
+    renderShadowMap(
+        object: Object3D,
+        camera: Camera,
+        shadowCamera: Camera,
+        light: Light,
+        parentCastShadow = false,
+        parentReceiveShadow = false
+    ) {
         const gl = this.renderer.gl;
-        if (object.castShadow || object.receiveShadow) {
+        if (parentCastShadow || parentReceiveShadow || object.castShadow || object.receiveShadow) {
             if (object instanceof Mesh) {
                 Mat4.multiply(object.mvMatrix, shadowCamera.matrixWorldInv, object.matrixWorld);
                 // TODO: cache depthMaterial
@@ -51,7 +58,14 @@ export class GL_ShadowDepthPass {
         }
 
         for (const childObject of object.children) {
-            this.renderShadowMap(childObject, camera, shadowCamera, light);
+            this.renderShadowMap(
+                childObject,
+                camera,
+                shadowCamera,
+                light,
+                parentCastShadow || object.castShadow,
+                parentReceiveShadow || object.receiveShadow
+            );
         }
     }
 }

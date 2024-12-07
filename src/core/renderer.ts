@@ -70,7 +70,6 @@ export class WebGLRenderer {
 
         if (this.enableShadowPass) {
             const shadowLights = this.renderState.getLights().filter((light) => light.castShadow);
-
             this.shadowDepthPass.render(shadowLights, scene, camera);
         }
 
@@ -168,9 +167,11 @@ export class WebGLRenderer {
         if (this.renderState.hasLight) {
             // TODO: multiple light
             program.setUniform("dirLight", this.renderState.lights.dirLights[0]);
-            program.setUniform("dirLightShadow", this.renderState.lights.dirLightShadows[0]);
-            program.setUniform("dirLightShadowMap", this.renderState.lights.dirLightShadowMaps[0], this.textures);
-            program.setUniform("dirLightShadowMatrix", this.renderState.lights.dirLightShadowMatrixs[0]);
+            if (this.enableShadowPass) {
+                program.setUniform("dirLightShadow", this.renderState.lights.dirLightShadows[0]);
+                program.setUniform("dirLightShadowMap", this.renderState.lights.dirLightShadowMaps[0], this.textures);
+                program.setUniform("dirLightShadowMatrix", this.renderState.lights.dirLightShadowMatrixs[0]);
+            }
         }
 
         if (material.enableDeferredRendering || material instanceof ShaderMaterial) {
@@ -232,12 +233,14 @@ export class WebGLRenderer {
             this.currentRenderTarget = null;
             this.state.bindFrameBuffer(null);
             this.state.drawBuffers(null);
-            this.setViewport(0, 0, this.canvas.width, this.canvas.height);
+            const { x, y, z, w } = this.viewport;
+            this.setViewport(x, y, z, w);
         }
     }
 
     setViewport(x, y, w, h) {
-        this.viewport.set([x, y, w, h]);
+        // there is no need to save rt's viewport
+        if (this.currentRenderTarget == null) this.viewport.set([x, y, w, h]);
         this.gl.viewport(x, y, w, h);
     }
 
