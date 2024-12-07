@@ -81,12 +81,12 @@ export const fragment = /* glsl */ `#version 300 es
             // ref line 13,14,15
             float projNormalSign = sign(dot(projNormalInPlane, Wx));
             float projNormalCos = clamp(dot(projNormalInPlane, Wo) / length(projNormalInPlane), 0.0, 1.0);
-            float projNormalTheta = projNormalSign * acos(projNormalCos);
+            float projNormalTheta = projNormalSign * acos(projNormalCos); // projNormalTheta equals to γ in equation 6
 
             // ref line 17
             for (int side = 0; side < 2; side ++) {
                 float sideCoef = float(side) * 2.0 - 1.0;
-                float cosHorizontal = -1.0;
+                float cosHorizontal = -1.0; // equals to cos(180°)
                 // ref line 19
                 for (int step = 0; step < sampleStepCount; step ++) {
 
@@ -109,13 +109,16 @@ export const fragment = /* glsl */ `#version 300 es
                 }
 
                 // ref line 27: h[side] ← n+ CLAMP((−1+2 ∗ side) ∗ arccos(cHorizonCos)−n,−π/2,π/2)
-                float sideTheta = projNormalTheta + clamp(sideCoef * acos(cosHorizontal) - projNormalTheta, -PI/2.0, PI/2.0);
+                float sideTheta = projNormalTheta + clamp(sideCoef * acos(cosHorizontal) - projNormalTheta, -PI/2.0, PI/2.0); // sideTheta is the angle between projNormalInPlane and horizonDir
                 // ref line 28: visibility ← visibility+ LEN(projNormalV) ∗ (cosN+2 ∗ h[side] ∗ sin(n)−cos(2 ∗ h[side]−n))/4 
-                visibility = visibility + length(projNormalInPlane) * (cosHorizontal + 2.0 * sideTheta * sin(projNormalTheta) - cos(2.0 * sideTheta - projNormalTheta)) / 4.0;
+                visibility = visibility + length(projNormalInPlane) * (projNormalCos + 2.0 * sideTheta * sin(projNormalTheta) - cos(2.0 * sideTheta - projNormalTheta)) / 4.0;
             }
         }
 
-        visibility /= float(directionCount);
+        visibility = clamp(visibility / float(directionCount), 0.0, 1.0);
+
+        visibility = pow(visibility, 0.6);
+        visibility = max(0.03, visibility);
         
         fragColor = vec4(vec3(visibility), 1.0);
 	}
